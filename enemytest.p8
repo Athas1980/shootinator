@@ -51,6 +51,8 @@ function _init()
 	spline=read_spline(splines[1])
 	spline2=read_spline(flip_pts_x(splines[1]))
 	spinspline=read_spline(splines[2])
+
+	#include levels.lua
 	init_game()
 end
 
@@ -234,7 +236,7 @@ function init_scene(number)
 		}
 
 		for s in all(something) do
-			printh("1,"..tostr(s[1]/10,true)[5]..tostr(s[1]/10,true)[6]..","..tostr(s[2]/8,true)[6]..tostr(s[3]/8,true)[6])
+			printh(tostr(s[1]/10,true)[5]..tostr(s[1]/10,true)[6]..",4,"..tostr(s[2]/8,true)[6]..tostr(s[3]/8,true)[6])
 		end
 
 		local function append(f2, f1)
