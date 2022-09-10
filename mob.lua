@@ -22,7 +22,7 @@ function create_mob(s,x,y,w,h)
 		hurt=def_hurt,
 		die=def_die,
 		hp=1,
-		score=100,
+		escore=100,
 		fra=0,
 		coffx=0,
 		coffy=0,
@@ -63,18 +63,20 @@ function def_col(_ENV)
 end
 
 function def_hurt(_ENV, pow)
+
 				flash=5
 				hp-=pow
 				if hp <= 0 then
 					die(_ENV)
 				else 
 					sfx(61)
+					add_score(1)
 				end 
 end
 
 function def_die(_ENV)
 	mob_to_ppart(_ENV)
 	remove(_ENV)
-	score+=score*score_mult>>>16
+	add_score(escore)
 	sfx(60)
 end

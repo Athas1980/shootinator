@@ -194,7 +194,6 @@ function init_scene(number)
 		local x=20
 		local xplus=20
 		function spawn()
-			printh("spawning")
 			add(mobs, create_enemy("green", x, -8,8))
 			if (x+xplus >128 or x+xplus<0) then
 				xplus=-xplus

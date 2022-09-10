@@ -195,7 +195,6 @@ while finished==false do
     dist+=d*8
     if value==1 then
       local fn=read_flap(next)
-      printh("flap")
       if distance_spawn[dist] then
         distance_spawn[dist] = append(fn, distance_spawn[dist])
       else 
@@ -223,7 +222,7 @@ while finished==false do
 end
 
 printh("total_dist::"..dist)
-
+total_dist=dist
 
 
 level_dat = distance_spawn

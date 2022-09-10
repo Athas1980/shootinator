@@ -25,7 +25,12 @@ function _init()
 		title={
 			draw=draw_title,
 			update=update_title
-		}
+		},
+		game_over={
+			draw=draw_over,
+			update=update_over
+		},
+		win={draw=draw_win, update=update_win}
 	}
 		lightenpal=read_kv_arr(
 		"0=0,1=13,2=8,3=1,4=9,5=13,"..
@@ -59,9 +64,13 @@ function _init()
 	spline2=read_spline(flip_pts_x(splines[1]))
 	spinspline=read_spline(splines[2])
 	shake=0
+	distance_blocked=false
 	
 	--global tables
 	init_title()
+	#include levels.lua
+	music(0,0,3)
+	_g=_ENV
 end
 
 function init_game()
@@ -81,6 +90,7 @@ function init_game()
 	flash=0
 	score=0
 	f=-1
+	d=0
 	add(mobs,p)
 	add(mobs,shield)
 	stars = create_stars()
@@ -234,136 +244,17 @@ end
 
 function update_game()
 	f+=1
+	if not distance_blocked then
+		d+=1
+	end
 	invun=max(0,invun-1)
-	--todo extract to level
-	if f==0 then 
-		add(mobs,
-		create_enemy("flap",0,-8))
-	end
-	if f==16 then
-		add(mobs,
-		create_enemy("flap",16,-8))
-	end
-	if f==32 then
-		add(mobs,
-		create_enemy("flap",32,-8))
-	end
-	if f==48 then
-		add(mobs,
-		create_enemy("flap",48,-8))
-	end
-	if f==64 then
-		add(mobs,
-		create_enemy("flap",64,-8))
-	end
-	if f==80 then
-		add(mobs,
-		create_enemy("flap",80,-8))
-	end
-	if f==96 then
-		add(mobs,
-		create_enemy("flap",96,-8))
-	end
 	
-	if f==140 then
-		add(mobs,
-		create_enemy("flap",120,-8))
+	if level_dat[d] then
+		level_dat[d]()
 	end
-	
-	if f==160 then
-	add(mobs,
-		create_enemy("flap",120,-8))
-	end
-	if f==180 then
-		add(mobs,
-			create_enemy("flap",104,-8))
-	end
-	if f==200 then
-		add(mobs,
-			create_enemy("flap",94,-8))
-		add(mobs, create_enemy("blob",64,-8,32))
-	end
-	if f==220 then
-		add(mobs,
-			create_enemy("flap",72,-8))
-	end
-		if f==240 then
-		add(mobs,
-			create_enemy("flap",56,-8))
-			add(mobs, create_enemy("blob",32,-8,48))
-	end
-	
-	for i=280,350,10 do
-		if f==i then
-			add(mobs,
-				create_enemy(
-				"disc",98,-8,spline)
-			)
-		end
-	end
-	
-	if f==300 then
-		add(mobs,
-				create_enemy(
-				"spin",32,-8,16))
-	end
-	
-	if f==310 then
-		add(mobs,
-				create_enemy(
-				"spin",48,-8,32))
-	end
-	
-	if f==320 then
-		add(mobs,
-				create_enemy(
-				"spin",60,-8,48))
-	end
-	
-	if f==330 then
-		add(mobs,
-				create_enemy(
-				"spin",64,-8,96))
-	end
-	
-	for i=480,580,10 do
-		if f==i then
-		
-			add(mobs,
-				create_enemy("disc",98,-8,spline2))
-		end
-	end
-	
-	for i=680,780,10 do
-		if f==i then
-		 local spl=spline
-			if f%20==0 then 
-				spl=spline2
-			end
-			add(mobs,
-				create_enemy("disc",98,-8,spl))
-		end
-	end
-	
-	if f==830 then
-		add(mobs,create_enemy("green",63,-8,32))
-	end
-	for i=840,890,10 do
-		local x1=63+830-i
-		local x2=63-(830-i)
-		if f==i then 
-			add(mobs,create_enemy("green",x1,-8,20))
-			add(mobs,create_enemy("green",x2,-8,20))
-		end
-	end
-	
-	for i=870,920,10 do
-		if f==i then
-			local x1=63+860-i
-			local x2=63-(860-i)
-			add(mobs,create_enemy("green",x1,-8,40))
-			add(mobs,create_enemy("green",x2,-8,40))
-		end
+
+	if d>=total_dist and #enmys==0 then
+		init_win()
 	end
 		
 			
@@ -444,6 +335,8 @@ function draw_game()
 	clip()
 	--spr(85,125,20,1,2)
 	rect(125,50,127,127,1)
+	d=min(d,total_dist)
+	line(126,126,126,126-(75*(d/total_dist)),11)
 	draw_mobs()
 	
 	for i=1,5 do
@@ -465,6 +358,8 @@ function draw_game()
 	spr(59,120,8) -- print(1,123,17)
 	pal()
 	print("🅾️", 114,10,7)
+
+	-- print(#enmys, 64,64,7)
 	
 --	
 --	print(#mobs,0,0,7)
@@ -559,7 +454,7 @@ function create_stars()
 end
 
 --distance vunerable to overflow
-function dist(p1,p2) 
+function pdist(p1,p2) 
 	return ((p2.x-p1.x)^2+(p2.y-p1.y)^2)^0.5
 end
 
@@ -610,7 +505,7 @@ function read_spline(points)
 		end
 		local d=0
 		for j=0x0.1,1,0x0.1 do
-			d+=dist(c(j-0x0.1),c(j))
+			d+=pdist(c(j-0x0.1),c(j))
 		end
 		add(curves,c)
 		add(dists,d)
@@ -657,6 +552,10 @@ function stripe(txt, x, y, cols)
 		clip(x,y+i-1,w,1)
 		print(txt,x,y,cols[i])
 	end
+end
+--Add to score
+function add_score(num)
+	score+=num>>>16
 end
 -->8
 --title
@@ -824,6 +723,10 @@ function check_collision()
 		
 		if collided(e,p) and invun<=0 then
 			lives-=1
+			if lives<0 then
+				init_over()
+				return
+			end
 			invun=120
 			flash=20
 			sfx(59)
@@ -833,6 +736,10 @@ function check_collision()
 	for eb in all(ebuls) do 
 			if collided(eb,p) and invun<=0 then
 			lives-=1
+			if lives<0 then
+				init_over()
+				return
+			end
 			invun=120
 			flash=20
 			sfx(59)
@@ -950,10 +857,9 @@ function textbox(x,y,w,h)
 	line(x+2,y)
 	
 	spr(139, r-26,y+3,3,3)
-	print("wHY ATTACK US AFTER ALL", x+3,y+3)
-	print("WE HAVE DONE FOR YOU?")
-	print("")
-	print("wE GAVE YOU FUSION.")
+	print("i'LL BE BACK", x+3,y+3)
+	print("WHEN THE SLOW DEV")
+	print("COMPLETES HIS GAME")
 
 --	line(b-2,y)
 	
@@ -986,6 +892,49 @@ function textbox2(x,y,w,h)
 --	line(b-2,y)
 	
 end
+
+function init_win()
+f=-1
+over_f=0
+state=states.win
+end
+
+
+
+
+function draw_win()
+	cls()
+	print("cONGRATULATIONS, YOU", 0,32, 7)
+	print("HAVE REACHED THE END OF DEMO")
+	print("")
+	print("thats all for the moment")
+
+	textbox()
+end
+
+function init_over()
+	state=states.game_over
+	f=-1
+	over_f=1
+end
+
+function draw_over()
+	cls()
+	if over_f < 60 then
+		draw_game()
+	end
+	print("game over", 40,40,7)
+end
+
+function update_over()
+	over_f+=1
+	if btn(❎) or btn(🅾️) then
+		if (over_f>60) init_game()
+	end
+end
+
+update_win = update_over
+
 __gfx__
 00008e700e0e0000020200000000006c76600000dc777ccddc777ccd1dc7cdd10111111000000000000000008080000800800000800080000080080000808000
 1dc09a70e8e880002020200000006c7707000000ddc7cddddcc7ccdd1cc7cc1101c7c1000000000000000000f0f0000f00f000009000f00000f00f0000f0f000

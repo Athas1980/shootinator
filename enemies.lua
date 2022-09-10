@@ -17,6 +17,7 @@ function create_disc_e(x,y,spl)
 	e.sn=1 --sprite number
 	e.hp=1
 	e.spl=spl
+	e.escore=50
 	function e:upd()
 		self.fra +=1
 		self.flash=max(0, self.flash-1)
@@ -39,6 +40,7 @@ end
 function create_flap_e(x,y,targety)
 
 	local e=create_mob(93,x,y)
+	e.escore=100
 	--todo extrac specific enemies
 	e.dy=1
 	e.sprs=split("93,94,95,94")
@@ -199,6 +201,7 @@ function create_green_e(x, y, ty)
 	e.sn=1
 	e.wiggle=2
 	e.foff=rnd(30)\1
+	e.escore=200
 	function e:upd()
 
 		self.fra +=1
@@ -323,7 +326,6 @@ function spinshot(mob)
 			o.dy=-speed
 		end
 	end
-	printh("dx:".. o.dx .. " dy:" .. o.dy)
 
 	function o:draw()
 		--0x0.5555
