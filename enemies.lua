@@ -189,7 +189,7 @@ function create_green_e(x, y, ty)
 	e.dy=0.5
 	e.w=1
 	e.h=1
-	e.hp=4
+	e.hp=3
 	e.ty=ty
 	e.ix=x
 	e.wait=180

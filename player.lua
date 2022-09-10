@@ -33,7 +33,7 @@ function create_player()
 			self.mov-=sgn(self.mov)
 		end
 		
-		self.mov=mid(-20,self.mov,20)
+		self.mov=mid(-15,self.mov,15)
 		--choose sprite based on speed
 		-- -15+ -> 1
 		-- - 5 -> 2
@@ -41,7 +41,7 @@ function create_player()
 		-- 15+ - 4
 		
 		local idx=split("1,2,2,3,3,3,4,4,5")
-		merge(self, sprs[idx[self.mov\5+5]])
+		merge(self, sprs[idx[self.mov\3+5]])
 		self.colw=self.pw-2*self.coffx
 		self.soffx=-self.pw/2
 	end

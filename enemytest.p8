@@ -82,6 +82,7 @@ function init_game()
 	msg=""
 
 	distance_spawns={}
+	init_scene(scene)
 
 end
 
@@ -214,54 +215,11 @@ function init_scene(number)
 	if scene==12 then
 		msg="12 Level beginning"
 				f=0 --reset frame counter only in test cart
-		distance_spawns={}
-		local function gs(x,ty)
-			return function()
-				add(mobs,create_enemy("green", x, -8, ty))
-			end
-		end
-  d=1
-		local something={
-		{10,32,64},{200,32,64},{200,64,32},
-		{100,64,64},{100,96,64},{20,96,48},
-		{20,96,32},{100,16,16},{150,16,16},
-		{0,32,25},{0,48,16},{0,64,25},
-		{100,120,16},{0,104,24},{0,96,32},{0,80,48},{0,64,48},
-		{200,8,64},{0,24,64},{0,40,64},{0,56,64},
-		{200,120,32},{0,104,32},{0,96,32},{0,80,32},{0,64,32},
-		{200,8,64},{0,24,64},{0,40,64},{0,56,64},
-		{200,120,32},{0,104,32},{0,96,32},{0,80,32},{0,64,32},
-		{250,56,64},{0,72,64},{24,56,48},{0,75,48},
-		{60,32,32},{0,40,32},{0,90,32},{0,106,32},{30,32,48},{0,40,48},{0,90,48},{0,106,48}
-		}
-
-		for s in all(something) do
-			printh(tostr(s[1]/10,true)[5]..tostr(s[1]/10,true)[6]..",4,"..tostr(s[2]/8,true)[6]..tostr(s[3]/8,true)[6])
-		end
-
-		local function append(f2, f1)
-    return function()
-        f1()
-        f2()
-    end
-		end
-		for s in all(something) do
-			d=d+s[1]
-			local sp=gs(s[2], s[3])
-			if s[1]==0 then
-				sp = append(sp, distance_spawns[d])
-				end
-			distance_spawns[d] = sp
-		end
-		-- distance_spawns[1] = gs(32,64)
-		-- distance_spawns[200] = gs(40,64)
-		-- distance_spawns[500] = gs(64,64)
-		-- distance_spawns[600] = gs(64,32)
+		-- distance_spawns=level_dat
 		
+		distance_spawns = level_dat
 
-		-- distance_spawns[250] = function() add(mobs,create_enemy("green", 32, -8, 32)) end
-		-- distance_spawns[200] = function() add(mobs,create_enemy("green", 64, -8, 64)) end
-		-- distance_spawns[240] = function() add(mobs,create_enemy("green", 64, -8, 40)) end
+		
 	end
 end
 
