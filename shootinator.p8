@@ -718,6 +718,7 @@ function check_collision()
 				e:hurt(b.pow)
 				remove(b)
 				add(mobs,create_pbulc(b.x,b.y))
+				impact_pparts(b.x,b.y)
 			end
 		end
 		
@@ -802,6 +803,17 @@ function mob_to_ppart(obj)
 				add(pparts,p)
 			end
 		end
+	end
+end
+
+function impact_pparts(x,y)
+	for i=1,6 do 
+		local dir=rnd(0.4)+0.55
+		local sp=rnd()+1
+		local dx,dy=cos(dir)*sp,sin(dir)*sp
+		add(pparts,
+			create_ppart(
+				x,y,dx,dy,rnd(10)+5,128,12))
 	end
 end
 
