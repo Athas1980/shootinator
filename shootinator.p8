@@ -286,6 +286,10 @@ function input()
 	if btn(➡️) then
 		p.dx=speed
 	end
+	if p.dx~=0 and p.dy~=0 then
+		p.dx*=0.707
+		p.dy*=0.707
+	end
 	if btn(❎) and p.stime<=0 then
 		sfx(63)
 		p.stime=13
