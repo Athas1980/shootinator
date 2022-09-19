@@ -130,7 +130,7 @@ function create_shield()
 	return sh
 end
 
-function createPowerup(typ, x,y)
+function create_powerup(typ, x,y)
 	pu=create_mob(typ+56,x,y)
 	pu.typ=typ
 	pu.pw=12

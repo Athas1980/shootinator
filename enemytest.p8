@@ -98,10 +98,10 @@ function init_scene(number)
 		add(mobs,create_enemy("flap",32,-8,48))
 		add(mobs,create_enemy("flap",64,-8,48))
 		add(mobs,create_enemy("flap",112,-8,48))
-		createPowerup(0, 64,64)
-		createPowerup(1, 32,64)
-		createPowerup(2, 96,64)
-		createPowerup(3, 120,64)
+		create_powerup(0, 64,64)
+		create_powerup(1, 32,64)
+		create_powerup(2, 96,64)
+		create_powerup(3, 120,64)
 
 	end
 
