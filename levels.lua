@@ -1,7 +1,9 @@
-local level = [[01,4,48
+local level = [[
+01,4,48
 14,4,48
 14,4,84
 0a,4,88
+-- This is a comment
 0a,4,c8
 02,4,c6
 02,4,c4
@@ -130,20 +132,25 @@ local level = [[01,4,48
 --so it can be converted later
 local dat={}
 for row in all(split(level,"\n")) do
- local bytes = split(row,",",false)
- for byte in all(bytes) do
-  add(dat, tonum("0x"..byte))
- end
+	if sub(row,1,2) == "--" then 
+		printh(sub(row,3))
+		break
+	else
+		local bytes = split(row,",",false)
+		for byte in all(bytes) do
+			add(dat, tonum("0x"..byte))
+		end
+	end
 end
 -- for byte in all(dat) do
 --  printh(byte)
 -- end
 
 function level_iter()
- local i=0
- return function()
-     i+=1 return dat[i]
- end
+	local i=0
+	return function()
+		i+=1 return dat[i]
+	end
 end
 
 local distance_spawn={}
@@ -151,74 +158,75 @@ local distance_spawn={}
 local next=level_iter()
 
 local function append(f2, f1)
-  return function() f1() f2() end
+	return function() f1() f2() end
 end
 
 function read_green(fn_next)
-   local byte=fn_next()
-   local x,ty=((byte&0xf0)>>>4)*8, (byte&0xf)*8
-			return function()
-				add(mobs,create_enemy("green", x, -8, ty))
-			end
+	local byte=fn_next()
+	local x,ty=((byte&0xf0)>>>4)*8, (byte&0xf)*8
+	return function()
+		add(mobs,create_enemy("green", x, -8, ty))
+	end
 end
 
 function read_flap(fn_next)
-   local byte=fn_next()
-   local hp = fn_next()
-   local x,ty=((byte&0xf0)>>>4)*8, (byte&0xf)*8
-			return function()
-        local en = create_enemy("flap", x, -8, ty)
-        en.hp=hp
-				add(mobs,en)
-			end
+	local byte=fn_next()
+	local hp = fn_next()
+	local x,ty=((byte&0xf0)>>>4)*8, (byte&0xf)*8
+	return function()
+	local en = create_enemy("flap", x, -8, ty)
+	en.hp=hp
+	add(mobs,en)
+	end
 end
-function read_disc(fn_next)
-  local spl
-  if fn_next()==1 then
-    spl=spline
-  else
-    spl=spline2
-  end
 
-  return function()
-    add(mobs,	create_enemy("disc",98,-8,spl))
-  end
+function read_disc(fn_next)
+	local spl
+	if fn_next()==1 then
+		spl=spline
+	else
+		spl=spline2
+	end
+
+	return function()
+		add(mobs,	create_enemy("disc",98,-8,spl))
+	end
 end
 
 local dist=0
 finished=false
 while finished==false do
-  local d,value=next(),next()
-  if (d==nil or value == nil) then
-    finished=true
-  else
-    dist+=d*8
-    if value==1 then
-      local fn=read_flap(next)
-      if distance_spawn[dist] then
-        distance_spawn[dist] = append(fn, distance_spawn[dist])
-      else 
-        distance_spawn[dist]=fn
-      end
-    end
-    if value==4 then
-      local fn=read_green(next)
-      if distance_spawn[dist] then 
-        distance_spawn[dist] = append(fn, distance_spawn[dist])
-      else 
-        distance_spawn[dist]=fn
-      end
-    end
+	local d,value=next(),next()
+	if (d==nil or value == nil) then
+		finished=true
+	else
+		dist+=d*8
+		if value==1 then
+			local fn=read_flap(next)
+			if distance_spawn[dist] then
+				distance_spawn[dist] = append(fn, distance_spawn[dist])
+			else 
+				distance_spawn[dist]=fn
+			end
+		end
+		if value==4 then
+			local fn=read_green(next)
+			if distance_spawn[dist] then 
+				distance_spawn[dist] = append(fn, distance_spawn[dist])
+			else 
+				distance_spawn[dist]=fn
+			end
+		end
 
-    if value==5 then
-      local fn=read_disc(next)
-      if distance_spawn[dist] then 
-        distance_spawn[dist] = append(fn, distance_spawn[dist])
-      else 
-        distance_spawn[dist]=fn
-      end
-    end
-  end
+		if value==5 then
+			local fn=read_disc(next)
+			if distance_spawn[dist] then 
+				distance_spawn[dist] = append(fn, distance_spawn[dist])
+			else 
+				distance_spawn[dist]=fn
+			end
+		end
+	end
 end
 
 printh("total_dist::"..dist)

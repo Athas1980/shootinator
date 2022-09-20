@@ -541,15 +541,6 @@ function read_spline(points)
 	return spl
 end
 
-function contains(table,val)
-	for e in all(tbl) do
-		if e==val then
-			return true
-		end
-	end
-	return false
-end
-
 function stripe(txt, x, y, cols)
 	local w = print(txt,x,y,0)
 	for i=1,#cols do
