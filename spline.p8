@@ -17,6 +17,10 @@ function _init()
 		ctrl_and_c_down
 	)
 
+	ctrl_v = press_watcher(
+		ctrl_and_v_down
+	)
+
 	delete_press = press_watcher (
 		delete_down
 	)
@@ -52,6 +56,9 @@ function _update()
 	end
 	if ctrl_c() then
 		handle_copy()
+	end
+	if ctrl_v() then
+		handle_paste()
 	end
 
 	handle_mouse_over()
@@ -122,12 +129,72 @@ function handle_mouse_over()
 	return hovered
 end
 
+function zoom_to_screen(c)
+	return z*c-64*z+64
+end
+
 function screen_to_zoom(p)
 	return flr((p.x-64*(1-z))/z+0.5),
 		flr((p.y-64*(1-z))/z+0.5)
 end
 
+function handle_paste()
+	printh("pasting")
+	local str = stat(4)
+	printh(str)
+	if str[1] == '"' then 
+		str=sub(str,2)
+	end
+	if str[#str] =='"' then
+		str=sub(str,1,#str-1)
+	end
+	local vals=split(str)
+	for i=1, #vals do 
+		vals[i] = zoom_to_screen(vals[i])
+	end
+	if #vals%8 != 0 then
+		return
+	end
+	local lpoints={}
+	
+	add(lpoints, {
+		x=vals[1],
+		y=vals[2],
+		cp2 = {
+			x=vals[3],
+			y=vals[4]
+		}
+	})
+	printh("added inital point" .. #lpoints)
+	for i=5,#vals-4,8 do
+		add(lpoints,{
+			cp1={
+				x=vals[i],
+				y=vals[i+1]
+			},
+			x=vals[i+2],
+			y=vals[i+3],
+			cp2={
+				x=vals[i+6],
+				y=vals[i+7]
+			}
+		})
+		printh("added point" .. #lpoints)
+	end
+	add(lpoints, {
+		cp1={
+			x=vals[#vals-3],
+			y=vals[#vals-2]
+		},
+		x=vals[#vals-1],
+		y=vals[#vals]
+	})
+	printh("added final point" .. #lpoints)
+	print_points(lpoints)
+	points=lpoints
+end
 function handle_copy()
+	print_points(points)
 	local str=chr(34)
 	local op=nil
 	local seperator=""
@@ -246,12 +313,12 @@ function handle_click(x,y)
 			if not p.cp2 then 
 				local ang=atan2(n_p.x-p_p.x,n_p.y-p_p.y)
 				local px,py=p.x,p.y
-					local dist_p=dist(p_p,p)*0.3
+					local dist_p=dist(p_p,p)/(sqrt(2)*2)
 				p.cp1={
 					x=px+cos(ang+0.5)*dist_p,
 					y=py+sin(ang+0.5)*dist_p
 				}
-				local dist_np=dist(n_p,p)*0.3
+				local dist_np=dist(n_p,p)/(sqrt(2)*2)
 				p.cp2={
 					x=px+cos(ang)*dist_np,
 					y=py+sin(ang)*dist_np
@@ -325,7 +392,12 @@ end
 
 function ctrl_and_c_down()
 	local c_down=stat(28,6)
-	return control_down and c_down
+	return control_down() and c_down
+end
+
+function ctrl_and_v_down()
+	local v_down=stat(28,25)
+	return control_down() and v_down
 end
 
 function delete_down()
@@ -334,6 +406,23 @@ end
 
 function lmb_down()
 	return stat(34)&1==1
+end
+
+function print_points(pts)
+	
+	for p in all(pts) do
+		local str=""
+		str=str.."\n{"
+		str=str..'"x":'..p.x..',"y":'..p.y
+		if p.cp1 then 
+			str=str..'",cp1:{"x":'..p.cp1.x..',"y":'..p.cp1.y.."}"
+		end
+		if p.cp2 then 
+			str=str..'",cp2:{"x":'..p.cp2.x..',"y":'..p.cp2.y.."}"
+		end
+		str=str.."}"
+		printh(str)
+	end
 end
 
 
