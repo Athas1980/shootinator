@@ -66,13 +66,25 @@ function _init()
 	spinspline=read_spline(splines[2])
 	shake=0
 	distance_blocked=false
-	
+
+	mnu_hide_col()
+
 	--global tables
 	init_title()
 	#include levels.lua
 	music(0,0,3)
 	_g=_ENV
 end
+
+function mnu_show_col()
+	menuitem(1, "hide coll", mnu_hide_col)
+	show_collision=true
+end
+
+function mnu_hide_col()
+	menuitem(1, "show coll", mnu_show_col)
+	show_collision=false
+end 
 
 function init_game()
 	state=states.game

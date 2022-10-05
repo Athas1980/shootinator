@@ -1,22 +1,30 @@
 local level = [[
+-- intro 
 01,4,48
 14,4,48
 14,4,84
 0a,4,88
--- This is a comment
+-- Three green at right
 0a,4,c8
 02,4,c6
 02,4,c4
+
+--single
 0a,4,22
+
+-- four at left
 0f,4,22
 00,4,43
 00,4,62
 00,4,83
+-- five at right root sign
 0a,4,f2
 00,4,d3
 00,4,c4
 00,4,a6
 00,4,86
+
+-- four at left low
 14,4,18
 00,4,38
 00,4,58
@@ -134,7 +142,6 @@ local dat={}
 for row in all(split(level,"\n")) do
 	if sub(row,1,2) == "--" then 
 		printh(sub(row,3))
-		break
 	else
 		local bytes = split(row,",",false)
 		for byte in all(bytes) do
