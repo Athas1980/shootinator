@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 37
+version 38
 __lua__
 --enemy tester
 --wes

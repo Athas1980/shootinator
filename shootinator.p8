@@ -1,10 +1,11 @@
 pico-8 cartridge // http://www.pico-8.com
-version 37
+version 38
 __lua__
 --shootinator
 --wes & bob
 
 --todo
+--level intros
 --use table for muzzle flash
 --add enemy
 -- https://discord.com/channels/398648936879095828/810921766314442772/992853422145552415
@@ -16,11 +17,15 @@ __lua__
 
 function _init()
 	--poke(0x5f36,0x40)
-	show_collision=false
+	show_collision=true
 	states={
 		game={
 			draw=draw_game,
 			update=update_game
+		},
+		intro={
+			draw=draw_level_intro,
+			update=update_level_intro
 		},
 		title={
 			draw=draw_title,
@@ -73,6 +78,34 @@ function _init()
 	init_title()
 	#include levels.lua
 	music(0,0,3)
+	dialogs={ 
+		{[[
+yOU'LL NEVER DEFEAT US 
+IN THAT SHIP, WE
+DESIGNED.
+...]], 1},		
+		{[[
+...
+iT CAN'T EVEN GO FULL 
+SPEED WHEN SHOOTING.]], 1},
+		{[[
+yOU INSULTED HUMANKIND
+fOR THAT ...
+
+... yOU wILL pAY!
+		]], 0},		
+		{[[
+i WILL SEND MY WEAKEST
+SHIPS AFTER YOU. tO
+GIVE YOU A FAIR CHANCE.
+		]], 1},
+		{[[
+yOU DO KNOW THAT WE ARE
+at war!!! rIGHT???
+
+ᶜ5-- IDIOT --ᶜ7
+		]], 0}
+}
 	_g=_ENV
 end
 
@@ -84,10 +117,14 @@ end
 function mnu_hide_col()
 	menuitem(1, "show coll", mnu_show_col)
 	show_collision=false
-end 
+end
+
+
+
 
 function init_game()
-	state=states.game
+	state=states.intro
+	init_level_intro(1)
 	srand(33)
 	mobs={}
 	buls={}
@@ -108,7 +145,30 @@ function init_game()
 	add(mobs,shield)
 	stars = create_stars()
 	score_mult=1
+end
 
+function init_level_intro(n)
+	dialog = 1
+	intro=1
+end
+
+function draw_level_intro()
+	cls()
+	draw_stars()
+	draw_mobs()
+	textbox(unpack(dialogs[dialog]))
+end
+
+function update_level_intro()
+	if btnp(❎) then
+		if intro==1 then
+			if dialog<5 then 
+				dialog +=1
+			else
+				state=states.game
+			end
+		end 
+	end
 end
 
 #include player.lua
@@ -305,7 +365,7 @@ function input()
 	end
 	if btn(❎) and p.stime<=0 then
 		sfx(63)
-		p.stime=13
+		p.stime=10
 		local y=p.y-4
 		local x=p.x
 		if p.can then
@@ -357,11 +417,11 @@ function draw_game()
 	draw_mobs()
 	
 	for i=1,5 do
-		local s=2
+		--local s=9
 		if i<lives+1 then
-			s=1
+			spr(9,(i*8)-8,0)
 		end
-		spr(s,(i*8)-8,0)
+		
 	end
 	local sc=tostr(score,0x2)
 	clip(0,0,0,0)
@@ -573,6 +633,29 @@ function init_title()
 	titley=-9
 	fact1=0
 	stars=create_stars()
+	ti=1
+	texts={
+		{},
+		{
+[[fOR YEARS THE ALIENS HAVE
+helped HUMANITY. THEY HELPED
+US BUILD FASTER-THAN-LIGHT
+TRAVEL. THEY GAVE US FUSION
+POWER.
+
+HOWEVER THE ᶜbALIEN OVERLORDᶜ7
+HAS SAID THAT THE BEST art
+HUMANS EVER MADE WAS 
+THE spice girls!]],8,55,7},
+			{
+[[
+fOR THIS INSULT THEY
+MUST BE PUNISHED.
+
+ᶜcshootinateᶜ7 THEM
+UNTIL THEY ᶜ8dieᶜ7
+]], 20,60,7}}
+	text={}
 end
 
 function draw_title()
@@ -583,26 +666,19 @@ function draw_title()
 	96,74-titley,1)
 	fillp()
 	fspr(0,96,68,9,30,titley,fact1)
-	local ln=50
---	print("for years the aliens have helped",0,ln,7)
---	ln+=6
---	print("humanity. they helped us produce",0,ln,7)
---	ln+=6
---	print("faster than light travel.",0,ln,7)
---	ln+=6
---	print("however the alien overlord has",0,ln,7)
---	ln+=6
---	print("said that the best music humans",0,ln,7)
---	ln+=6
---	print("ever made was the spice girls",0,ln,7)
---	ln+=10
---	print("for this insult.",0,ln,7)
---	ln+=6
---	print("they must be punished!",0,ln,7)
---	ln+=18
---	print("shootinate them until they die.",0,ln,7)
 
---	textbox2()
+	unpack_print(texts[ti])
+	print("press x to start",30,122,8)
+	if ti>2 then 
+		print("⬅️",0,122,7)
+	end
+	if ti>1 and ti<#texts then
+		print("➡️",120,122,7)
+	end
+end
+
+function unpack_print(tbl)
+	print(unpack(tbl))
 end
 
 function update_title()
@@ -613,11 +689,23 @@ function update_title()
 	if f==46 or f==90 then
 		sfx(62)
 	end
+	if f==46 then 
+		ti=2
+	end
+
 	fact1=easeinoutquart(
 		mid(0,(f-120)/60,1))
 	if btn(❎) or btn(🅾️) then
 		init_game()
 	end
+
+	if btn(⬅️) and ti>1 then
+		ti-=1
+	end
+	if btn(➡️) and ti>1 then
+		ti+=1
+	end
+	ti= mid(2,ti,#texts)
 end
 
 function fspr(sx,sy,sw,sh,
@@ -645,41 +733,6 @@ function fspr(sx,sy,sw,sh,
 	end
 	pal()
 	clip()
-end
-
-function fspr2(n,x,y,w,h,fx,fy)
-	local w=w or 1
-	local h=h or 1
-	local pw=w*8
-	local ph=h*8
-	local fx=fx or false
-	local fy=fy or false
-	local effectwidth=5
-	local min=x-effectwidth-ph
-	local max=x+pw
-	local dur=100
-	local t=0
-	return function()
-		local pos=min+(max-min)*easeinoutquart(t/dur)
-		pal() --default
-		spr(n,x,y,w,h,fx,fy)
-		for l=1,ph do 
-			clip(pos+ph-l,y+l-1,effectwidth,1)
-			pal(lightenpal[1]) --mid
-			spr(n,x,y,w,h,fx,fy)
-			clip(pos+effectwidth/2+ph-l,y+l-1,1,1)
-			pal(lightenpal[2]) -- light
-			spr(n,x,y,w,h,fx,fy)
-			if t>dur then
-				t=0
-			end
-			clip()
-			pset(pos,64,4)
-		end
-		t+=1
-	
-		pal()
-	end
 end
 
 function easeinoutquart(t)
@@ -858,60 +911,7 @@ end
 -->8
 --ui/dialog
 
-function textbox(x,y,w,h)
-	local x=x or 2
-	local y=y or 96
-	local w=w or 124
-	local h=h or 30
-	local r=x+w-1
-	local b=y+h-1
-	
-	rectfill(x,y,r,b,0)
-	line(x+2,y,r-2,y,7)
-	line(r,y+2)
-	line(r,b-2)
-	line(r-2,b)
-	line(x+2,b)
-	line(x,b-2)
-	line(x,y+2)
-	line(x+2,y)
-	
-	spr(139, r-26,y+3,3,3)
-	print("i'LL BE BACK", x+3,y+3)
-	print("WHEN THE SLOW DEV")
-	print("COMPLETES HIS GAME")
-
---	line(b-2,y)
-	
-end
-
-function textbox2(x,y,w,h)
-	local x=x or 2
-	local y=y or 96
-	local w=w or 124
-	local h=h or 30
-	local r=x+w-1
-	local b=y+h-1
-	
-	rectfill(x,y,r,b,0)
-	line(x+2,y,r-2,y,7)
-	line(r,y+2)
-	line(r,b-2)
-	line(r-2,b)
-	line(x+2,b)
-	line(x,b-2)
-	line(x,y+2)
-	line(x+2,y)
-	
-	spr(136,x+3,y+3,3,3)
-	print("hMMM...", x+30,y+3)
-	print("")
-	print("")
-	print("...tRUE")
-
---	line(b-2,y)
-	
-end
+#include textbox.lua
 
 function init_win()
 f=-1
@@ -929,7 +929,10 @@ function draw_win()
 	print("")
 	print("thats all for the moment")
 
-	textbox()
+
+
+
+	
 end
 
 function init_over()
@@ -956,13 +959,13 @@ end
 update_win = update_over
 
 __gfx__
-00008e700e0e0000020200000000006c76600000dc777ccddc777ccd1dc7cdd10111111000000000000000008080000800800000800080000080080000808000
-1dc09a70e8e880002020200000006c7707000000ddc7cddddcc7ccdd1cc7cc1101c7c1000000000000000000f0f0000f00f000009000f00000f00f0000f0f000
-28e0a770e888200020002000000c00c0000000000dc7cd00cdc7cdc0c1d7d1ccc71d107c0000000000000000a0a0000a00a0000a9000a90000a00f0000a0a000
-3b70b77008820000020200000067c000000000000dc7cd0000c7c0000c1d10c0dc0000cd000000000000000a90f000a900f0000f9000f90000a00a0000f0a900
-49a0c67000200000002000000c7000000000000000dcd000000c00000000000000000000000000000000000f909900f90099000a900099000a900a900a90a900
-5d70d670000000000000000006cc000000000000000d0000000000000000000000000000000000000000000995a9009955a900f99555499009955a900995a900
-6770ef700000000000000000c7000000000000000000000000000000000000000000000000000000000000097ca940997ca990a907c10a90a99c7990a99c7900
+00008e700e0e0000020200000000006c76600000dc777ccddc777ccd1dc7cdd10111111008008000000000008080000800800000800080000080080000808000
+1dc09a70e8e880002020200000006c7707000000ddc7cddddcc7ccdd1cc7cc1101c7c1000900900000000000f0f0000f00f000009000f00000f00f0000f0f000
+28e0a770e888200020002000000c00c0000000000dc7cd00cdc7cdc0c1d7d1ccc71d107c097c900000000000a0a0000a00a0000a9000a90000a00f0000a0a000
+3b70b77008820000020200000067c000000000000dc7cd0000c7c0000c1d10c0dc0000cda7ccd9000000000a90f000a900f0000f9000f90000a00a0000f0a900
+49a0c67000200000002000000c7000000000000000dcd000000c0000000000000000000091cdd9000000000f909900f90099000a900099000a900a900a90a900
+5d70d670000000000000000006cc000000000000000d0000000000000000000000000000091190000000000995a9009955a900f99555499009955a900995a900
+6770ef700000000000000000c7000000000000000000000000000000000000000000000005005000000000097ca940997ca990a907c10a90a99c7990a99c7900
 7770f77000000000000000006cc00000000000000000000000000000000000000000000000000000000000accda94a9ccda99a990cd60f99a99dcd90a99dcc40
 089a7a980001000000000000c7000000000000000000000000000000000000000000000000000000000000acd1a9409cd1a990499d1da940a991dc99a991dc40
 089a7a98001d100000000000607000000000000000000000000000000000000000000000000000000000000ddd99009ddd99000491d19400099d1c90099ddd00

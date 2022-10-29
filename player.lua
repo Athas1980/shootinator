@@ -6,7 +6,7 @@ function create_player()
 		"muzx=-1,sx=112,pw=8,f1x=-2,f2x=2,coffx=1|"..
 		"muzx=-1,sx=120,pw=7,f1x=-2,f2x=1,coffx=1"
 	)
-	local plr=create_mob(1,50,100,2,2)
+	local plr=create_mob(1,64,80,2,2)
 	merge(plr,
 		{mov=0,
 		stime=0,

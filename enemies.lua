@@ -21,7 +21,7 @@ function create_disc_e(x,y,spl)
 	function e:upd()
 		self.fra +=1
 		self.flash=max(0, self.flash-1)
-		if self.fra%8==0 then
+		if self.fra%5==0 then
 			self.sn=self.sn%4+1
 			self.s=self.sprs[self.sn]
 		end
@@ -197,7 +197,7 @@ function create_green_e(x, y, ty)
 	e.wait=180
 	e.wait_dec=0
 	e.sprs={65,66}
-	e.fra=rnd(30)\1
+	e.fra=rnd(180)\1
 	e.sn=1
 	e.wiggle=2
 	e.foff=rnd(30)\1
@@ -229,7 +229,7 @@ function create_green_e(x, y, ty)
 			self.wiggle=1.2
 		end
 
-		if rnd()<1/180 then
+		if self.fra%180 ==1 then
 			create_lazer_ebul(self)
 		end
 		if self.y>130 then
