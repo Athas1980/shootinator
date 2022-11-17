@@ -77,6 +77,7 @@ end
 function def_die(_ENV)
 	mob_to_ppart(_ENV)
 	remove(_ENV)
+	float(escore, x, y-10, 13)
 	add_score(escore)
 	sfx(60)
 end

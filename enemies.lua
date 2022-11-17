@@ -9,93 +9,90 @@ function create_enemy(etype,x,y,props)
 	return e 
 end
 
-function create_disc_e(x,y,spl)
-	local e=create_mob(81,x,y)
-	--todo extrac specific enemies
-	e.dy=1
-	e.sprs=split("81,82,83,84")
-	e.sn=1 --sprite number
-	e.hp=1
-	e.spl=spl
-	e.escore=50
-	function e:upd()
-		self.fra +=1
-		self.flash=max(0, self.flash-1)
-		if self.fra%5==0 then
-			self.sn=self.sn%4+1
-			self.s=self.sprs[self.sn]
+function create_disc_e(_x,_y,_spl)
+	local _ENV=create_mob(81,_x,_y)
+	
+	merge(_ENV, read_assoc("dy=1,sn=1,hp=1,escore=50"))
+	sprs=split("81,82,83,84")
+	spl=_spl
+
+	function upd(_ENV)
+		fra +=1
+		flash=max(0, flash-1)
+		if fra%5==0 then
+			sn=sn%4+1
+			s=sprs[sn]
 		end
-		if self.y>130 then
-			remove(self)
+		if y>130 then
+			remove(_ENV)
 		end
 
 	end
-	function e:move()
-		merge(self,self.spl(self.fra/300))
+	function move(_ENV)
+		merge(_ENV,spl(fra/300))
 	end
 
-	return e
+	return _ENV
 end
 
-function create_flap_e(x,y,targety)
+function create_flap_e(x1,y1,target_y)
 
-	local e=create_mob(93,x,y)
-	e.escore=100
-	--todo extrac specific enemies
-	e.dy=1
-	e.sprs=split("93,94,95,94")
-	e.fsprs=split("77,78,79")
-	e.sn=1 --sprite number
-	e.hp=2
-	e.targety=targety or 32
-	e.pp = 30+rnd(60)
-	e.frict=0.98
-	e.accel=0.1
-
-	function e:upd()
-		if self.y>self.targety then
-			self.dy=0
+	local e=create_mob(93,x1,y1)
+	local props=read_assoc("escore=100,dy=1,sn=1,hp=2,frict=0.98,accel=0.1")
+	
+	merge(e,props)
+	
+	local _ENV = e
+	sprs=split("93,94,95,94")
+	fsprs=split("77,78,79")
+	targety=target_y or 32
+	pp = 30+rnd(60)
+	
+	function e.upd(_ENV)
+		if y>targety then
+			dy=0
 		end
 
-		self.dx+=(p.x+p.pw/2-self.x)/self.pp*e.accel
+		dx+=(p.x+p.pw/2-x)/pp*accel
 
 		for i=1,3 do
 			for alt in all(enmys) do
 				if alt == self then
 					break
 				end
-				if collided(create_mob(0,self.x-i*8, self.y),alt) then
-				 	self.dx+=(3-i)*(self.accel/2)
+				if collided(create_mob(0,x-i*8, y),alt) then
+				 	dx+=(3-i)*(accel/2)
 				end
-				if collided(create_mob(0,self.x+i*8, self.y),alt) then
-					self.dx-=(3-i)*(self.accel/2)
+				if collided(create_mob(0,x+i*8,y),alt) then
+					dx-=(3-i)*(accel/2)
 				end
 			end
 		end
 
-		self.dx=self.dx*self.frict
-		self.flash=max(0, self.flash-1)
-		self.fra +=1
-		if self.fra%3==0 then
-			self.fs=rnd(self.fsprs)
+		dx*=frict
+		flash=max(0, flash-1)
+		fra +=1
+		if fra%3==0 then
+			fs=rnd(fsprs)
 		end
-		if self.fra%7==0 then
-			self.sn=self.sn%4+1
-			self.s=self.sprs[self.sn]
+		if fra%7==0 then
+			sn=sn%4+1
+			s=sprs[sn]
 		end
-		if self.y>130 then
-			remove(self)
+		if y>130 then
+			remove(_ENV)
 		end
-		self.x=mid(4,120,self.x)
+		x=mid(4,120,x)
+		--fixme remove randomness
 		if rnd()<1/180 then
-			create_lazer_ebul(self)
+			create_lazer_ebul(_ENV)
 		end
 	end
 	
-	function e:draw()
-		local ox=self.x-self.pw/2
-		local oy=self.y-self.ph/2
-		spr(self.fs,ox,oy-8)
+	function e.draw(_ENV)
+		local ox=x-pw/2
+		local oy=y-ph/2
+		spr(fs,ox,oy-8)
 		if e.flash>0 then
 			pal(lightenpal[1])
 		end
@@ -103,9 +100,9 @@ function create_flap_e(x,y,targety)
 			pal(lightenpal[2])
 		end
 		
-		spr(self.s,ox,oy)
+		spr(s,ox,oy)
 		pal()
-		draw_collision(self)
+		draw_collision(_ENV)
 	end
 	return e
 end
@@ -119,126 +116,112 @@ function flip_pts_x(pts)
 	return output
 end
 
-function create_blob_e(x,y,ty)
-	local e=create_mob(106,x,y)
+function create_blob_e(x1,y1,ty1)
+	local _ENV=create_mob(106,x1,y1)
 	--todo extrac specific enemies
-	e.w=2
-	e.h=2
-	e.dy=1
-	e.sprs=split("106,108,110")
-	e.sn=1 --sprite number
-	e.hp=10
-	e.spl=spl
-	e.pw=16
-	e.ph=16
-	function e:upd()
-		self.fra +=1
-		self.flash=max(0, self.flash-1)
-		if self.fra%8==0 then
-			self.sn=self.sn%3+1
-			self.s=self.sprs[self.sn]
+	merge(_ENV, read_assoc(
+		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
+	))
+	sprs=split("106,108,110")
+	ty=ty1
+	function upd(_ENV)
+		fra +=1
+		flash=max(0, flash-1)
+		if fra%8==0 then
+			sn=sn%3+1
+			s=sprs[sn]
 		end
-		self.dx=cos(self.fra/64)
-		if self.y<ty then
-			self.dy=1
-		else self.dy=sin(self.fra/32) end
+		dx=cos(fra/64)
+		if y<ty then
+			dy=1
+		else dy=sin(fra/32) end
 
 		if rnd()<1/180 then
-			spinshot(self)
+			spinshot(_ENV)
 		end
 
 	end
-	return e
+	return _ENV
 end
 
 
-function create_spin_e(x,y,ty)
-	local e=create_mob(106,x,y)
-	--todo extrac specific enemies
-	e.w=2
-	e.h=2
-	e.dy=1
-	e.sprs=split("96,98,100,102")
-	e.sn=1 --sprite number
-	e.hp=10
-	e.pw=16
-	e.ph=16
-	e.spl=spinspline
+function create_spin_e(_x,_y)
+	local _ENV=create_mob(106,_x,_y)
+	merge(_ENV, read_assoc(
+		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
+	))
+	sprs=split("96,98,100,102")
+	spl=spinspline
 	
-	function e:upd()
-		self.fra +=1
-		self.flash=max(0, self.flash-1)
-		if self.fra%8==0 then
-			self.sn=self.sn%3+1
-			
-			self.s=self.sprs[self.sn]
+	function upd(_ENV)
+		fra +=1
+		flash=max(0, flash-1)
+		if fra%8==0 then
+			sn=sn%3+1
+			s=sprs[sn]
 		end
-		if self.y>130 then
-			remove(self)
+		if y>130 then
+			remove(_ENV)
 		end
 
 	end
 
-	function e:move()
-		merge(self,self.spl(self.fra/900))
+	function move(_ENV)
+		merge(_ENV,spl(fra/900))
 	end
 
-	return e
+	return _ENV
 end
 
-function create_green_e(x, y, ty)
-	local e=create_mob(65,x,y)
-	e.dy=0.5
-	e.w=1
-	e.h=1
-	e.hp=3
-	e.ty=ty
-	e.ix=x
-	e.wait=180
-	e.wait_dec=0
-	e.sprs={65,66}
-	e.fra=rnd(180)\1
-	e.sn=1
-	e.wiggle=2
-	e.foff=rnd(30)\1
-	e.escore=200
-	function e:upd()
 
-		self.fra +=1
-		self.flash=max(0, self.flash-1)
-		if self.fra%11==0 then
-			self.sn=self.sn%2+1
-			self.s=self.sprs[self.sn]
+function create_green_e(x1, y1, ty1)
+	local _ENV=create_mob(65,x1,y1)
+	merge (_ENV, read_assoc(
+		"dy=0.5,w=1,h=1,hp=3,wait=180,wait_dec=0,sn=1,wiggle=2,escore=200"
+	))
+	ty=ty1
+	ix=x
+	sprs={65,66}
+	fra=rnd(180)\1
+	foff=rnd(30)\1
+	function upd(_ENV)
+		
+		fra +=1
+		
+		flash=max(0, flash-1)
+		if fra%11==0 then
+			sn=sn%2+1
+			s=sprs[sn]
 		end
-		self.x=sin((f+self.foff)/30)*self.wiggle+self.ix
-		self.wait-=self.wait_dec
+		x=sin((f+foff)/30)*wiggle+ix
+		wait-=wait_dec
 
-		if self.y>=self.ty and self.wait_dec==0 then
-			self.dy=0
-			self.wiggle=3
-			self.wait_dec = 1
+		if y>=ty and wait_dec==0 then
+			dy=0
+			wiggle=3
+			wait_dec = 1
 		end
-		if self.wait <45 then
-			self.wiggle=1.2
+		if wait <45 then
+			wiggle=1.2
 		end
-		if self.wait <30 then
-			self.wiggle = 0
+		if wait <30 then
+			wiggle = 0
 		end
-		if self.wait<0 then
-			self.dy=1.5
-			self.wiggle=1.2
+		if wait<0 then
+			dy=1.5
+			wiggle=1.2
 		end
 
-		if self.fra%180 ==1 then
-			create_lazer_ebul(self)
+		if fra%180 ==1 then
+			create_lazer_ebul(_ENV)
 		end
-		if self.y>130 then
-			remove(self)
+		if y>130 then
+			remove(_ENV)
 		end
 	end
 
 
-	return e
+	return _ENV
 end
 
 function create_launcher_e()
@@ -275,100 +258,97 @@ end
 
 function create_lazer_ebul(e)
 	sfx(58,3)
-	local bul=create_mob(86,e.x,e.y+8)
-	bul.f=-5;
+	local _ENV=create_mob(86,e.x,e.y+8)
+	f=-5;
 	e.flash=20;
-	function bul:upd()
-		self.f+=1
-		if (self.f>0) then
-				self.dy=max(self.f/30,2)
+	function upd(_ENV)
+		f+=1
+		if (f>0) then
+				dy=max(f/30,2)
 		else 
-			self.x=e.x
+			x=e.x
 		end
-		if self.y>130 then
-			remove(self)
+		if y>130 then
+			remove(_ENV)
 		end
 	end
-	add(ebuls, bul)
-	add(mobs, bul)
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
 end
 
 function spinshot(mob)
 	sfx(57)
-	local speed=1
-	local o={
-		x=mob.x,
-		y=mob.y,
-		dx=0,
-		dy=0,
-		rot=0,
-		dir=0.75,
-		speed=speed,
-		lock=false,
-		turn=0.0025,
-		move=def_move
-	}
+	local spd=1
+	local _ENV=create_mob(0,mob.x,mob.y)
+	merge(_ENV, read_assoc(
+		"dx=0,dy=0,rot=0,dir=0.75,turn=0.0025"
+	))
+	x=mob.x
+	y=mob.y
+	lock=false
+	speed=spd
+	move=def_move
 
 	if abs(p.x-mob.x) >= abs(p.y-mob.y) then
 		if p.x-mob.x>0 then
-			o.dir=0
-			o.dx=speed
+			dir=0
+			dx=spd
 		else
-			o.dir=0.5
-			o.dx=-speed
+			dir=0.5
+			dx=-spd
 		end
 	else 
 		if p.y-mob.y>0 then
-			o.dir=0.75
-			o.dy=speed
+			dir=0.75
+			dy=spd
 		else
-			o.dir=0.25
-			o.dy=-speed
+			dir=0.25
+			dy=-spd
 		end
 	end
 
-	function o:draw()
+	function draw(_ENV)
 		--0x0.5555
 		--0x0.aaaa
-		local rot,x,y=self.rot,self.x,self.y
+		
 		for i=1,3 do
 			local x1=x+cos(rot)*3
 			local y1=y+sin(rot)*3
 			circ(x1,y1,1,3)
 			pset(x1,y1,11)
 			rot+=0x0.5555
-			if self.lock then 
-				pset(self.x, self.y, 8)
+			if lock then 
+				pset(x, y, 8)
 			end
-			draw_collision(self)
+			draw_collision(_ENV)
 		end
 	end
-	function o:upd()
-		self.rot=(self.rot+0x0.05)%1
-		self.player_ang =
-			atan2(p.x-self.x,p.y-self.y)
-		local ang_diff=self.player_ang-self.dir
+	function upd(_ENV)
+		rot=(rot+0x0.05)%1
+		player_ang =
+			atan2(p.x-x,p.y-y)
+		local ang_diff=player_ang-dir
 		if abs(ang_diff)%1<0.166 then
-			self.lock=true
-			self.dir+=self.turn*sgn(ang_diff)
-			self.dx=cos(self.dir)*self.speed
-			self.dy=sin(self.dir)*self.speed
+			lock=true
+			dir+=turn*sgn(ang_diff)
+			dx=cos(dir)*speed
+			dy=sin(dir)*speed
 		else
-			self.lock = false
+			lock = false
 		end
-		self.dir%=1
-		if self.x>130 or self.y>130
-		 or self.x<-8 or self.y<-8 then
-			remove(self)
+		dir%=1
+		if x>130 or y>130
+		 or x<-8 or y<-8 then
+			remove(_ENV)
 		end
 	end
-	function o:move()
-		self.x+=self.dx
-		self.y+=self.dy
+	function move(_ENV)
+		x+=dx
+		y+=dy
 	end
-	function o:col()
-		return {self.x-4,self.y-4,self.x+4,self.y+5}
+	function col()
+		return {x-4,y-4,x+4,y+5}
 	end
-	add(ebuls, o)
-	add(mobs, o)
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
 end

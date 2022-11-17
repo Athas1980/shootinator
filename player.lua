@@ -19,21 +19,21 @@ function create_player()
 		soffx=0
 		})
 
-	function plr:upd()
-		self.x = mid(4,self.x,123)
-		self.y = mid(4,self.y,123)
-		if self.stime>0 then
-			self.stime=self.stime-1
+	function plr.upd(_ENV)
+		x = mid(4,x,123)
+		y = mid(4,y,123)
+		if stime>0 then
+			stime=stime-1
 		end
-		if self.dx<0 then
-			self.mov-=1
-		elseif self.dx>0 then
-			self.mov+=1
+		if dx<0 then
+			mov-=1
+		elseif dx>0 then
+			mov+=1
 		else
-			self.mov-=sgn(self.mov)
+			mov-=sgn(mov)
 		end
 		
-		self.mov=mid(-15,self.mov,15)
+		mov=mid(-15,mov,15)
 		--choose sprite based on speed
 		-- -15+ -> 1
 		-- - 5 -> 2
@@ -41,39 +41,46 @@ function create_player()
 		-- 15+ - 4
 		
 		local idx=split("1,2,2,3,3,3,4,4,5")
-		merge(self, sprs[idx[self.mov\3+5]])
-		self.colw=self.pw-2*self.coffx
-		self.soffx=-self.pw/2
+		merge(_ENV, sprs[idx[mov\3+5]])
+		colw=pw-2*coffx
+		soffx=-pw/2
+
+		if lives and lives <2 then
+
+			add(pparts, 
+			create_ppart(
+				x-4+rnd(8),
+				y,
+				rnd(0.25)-.05,
+				rnd(2)+1,
+				20,
+				20,
+				rnd({5,6,9})))
+		end
 	end
 
 
-	function plr:draw()
-		local offx=-self.pw/2
-		local offy=-self.ph/2
+	function plr.draw(_ENV)
+		local offx=-pw/2
+		local offy=-ph/2
+		local pal, palt, sspr =_g.pal, _g.palt, _g.sspr
 		if flash>10 then
 			pal(lightenpal[2])
-			self.x+=(f%5-2)*2
-			self.y+=(f%5-2)*2
+			x+=(f%5-2)*2
+			y+=(f%5-2)*2
 		elseif flash>0 then
 			pal(lightenpal[1])
 		end
-		local fy=self.y+6
+		local fy=y+6
 
-		local x=self.x+offx
-		local y=self.y+offy
-		local fx1=x+self.f1x
-		local fx2=x+self.f2x
+		local x=x+offx
+		local y=y+offy
+		local fx1=x+f1x
+		local fx2=x+f2x
 		--flame frame
-		local ffr=flr(f%16/4)
-		local fspr=self.dy<0 and 
-			34 or 33
-		sspr(self.sx,
-			self.sy,
-			self.pw,
-			self.ph,
-			x,
-			y
-		)
+		local ffr=_g.flr(f%16/4)
+		local fspr=dy<0 and	34 or 33
+		_g.sspr(sx, sy,	pw,	ph, x, y)
 		pal()
 
 		if ffr~=0 then
@@ -92,7 +99,7 @@ function create_player()
 			pal()
 			palt()
 		end
-		draw_collision(self)
+		draw_collision(_ENV)
 	end
 	return plr
 end
@@ -104,8 +111,11 @@ function create_shield()
 		self.x,self.y=p.x,p.y
 	end
 	function sh:draw()
-		local x,y=self.x-5,self.y-5
+		local x,y=self.x-6,self.y-5
 		if invun>0 then
+			if invun<40 and (invun/2)%2==0 then
+				return
+			end
 			pal_idx=(f\3)%(#shield_darken_pal)+1
 			spal = shield_darken_pal[pal_idx]
 			for i,v in pairs(spal) do
@@ -130,13 +140,19 @@ function create_shield()
 	return sh
 end
 
-function create_powerup(typ, x,y)
-	pu=create_mob(typ+56,x,y)
-	pu.typ=typ
+function create_powerup(_typ, _x,_y)
+	pu=create_mob(_typ+55,_x,_y)
+	pu.typ=_typ
 	pu.pw=12
 	pu.ph=10
 	pu.dy=0.25
-	function pu:draw()
+	pu.life=240
+	function pu.draw(_ENV)
+		if (life<60 and (f/2)%2 == 0)
+			or (life<30 and (f/3)%2 >0)
+		then
+			return
+		end
 		if (f\5)%4 == 1 or (f\5)%4 == 3 then
 			pal(lightenpal[1])
 		end
@@ -144,13 +160,23 @@ function create_powerup(typ, x,y)
 			pal(lightenpal[2])
 		end
 
-		spr(60,self.x-8,self.y-8,1,1,false,false)
-		spr(60,self.x,self.y-8,1,1,true,false)
-		spr(60,self.x-8,self.y,1,1,false,true)
-		spr(60,self.x,self.y,1,1,true,true)
+		spr(60,x-8,y-8,1,1,false,false)
+		spr(60,x,y-8,1,1,true,false)
+		spr(60,x-8,y,1,1,false,true)
+		spr(60,x,y,1,1,true,true)
+		print(typ, x, y-10,7)
 		pal()
-		spr(self.s,self.x-4,self.y-4)
-		draw_collision(self)
+		spr(s,x-4,y-4)
+		draw_collision(_ENV)
+	end
+
+	function pu.upd(_ENV)
+		life-=1
+		if x >128 or y>160
+		or x<-8 or y<-8
+		or life<0 then
+			remove(_ENV)
+		end
 	end
 	add(p_ups, pu)
 	add(mobs, pu)

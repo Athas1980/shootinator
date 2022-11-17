@@ -5,9 +5,16 @@ __lua__
 --wes & bob
 
 --todo
+--pickups
 --level intros
 --use table for muzzle flash
 --add enemy
+-- game over screen / death animation
+-- Add levels
+-- boss
+-- missile lanucher
+-- lazer
+
 -- https://discord.com/channels/398648936879095828/810921766314442772/992853422145552415
 -- thanks to atticurse
 
@@ -56,11 +63,7 @@ function _init()
 			"6=0,7=0,12=0|"..
 			"6=0,7=0,12=0|"
 	)
-	
-	enemy_types=split(
-		"flap,skull,wave,green,disc,launcher"..
-		"blob,spin")
-	
+
 	splines={
 		split("93,-17,107,6,127,42,121,68,121,68,116,92,88,125,64,125,64,125,39,126,2,94,3,69,3,69,3,49,45,40,65,40,65,40,84,40,123,50,121,69,121,69,120,94,82,112,60,123,60,123,49,129,29,118,17,123,17,123,12,125,13,137,13,180"),
 		split("123,-17,124,-3,127,7,117,8,117,8,81,12,9,-12,9,20,9,20,9,43,118,3,117,37,117,37,116,68,8,27,8,63,8,63,8,94,117,51,117,80,117,80,117,109,8,71,8,100,8,100,8,127,124,107,125,119,125,119,126,124,119,130,123,136"),
@@ -131,14 +134,20 @@ function init_game()
 	ebuls={}
 	enmys={}
 	pparts={}
-	tabs={mobs,buls,enmys, ebuls}
+	p_ups={}
+	tabs={mobs,buls,enmys, ebuls, p_ups}
 	p=create_player()
 	p:upd()
 	shield=create_shield()
+	str_shield=false
+	str_rapid=false
+	str_spread=false
 	invun=0
 	lives=5
 	flash=0
 	score=0
+	spread=0
+	rapid=0
 	f=-1
 	d=0
 	add(mobs,p)
@@ -184,12 +193,14 @@ end
 
 #include mob.lua
 
-function create_pbul(x,y)
+function create_pbul(x,y,dx)
+	dx=dx or 0
 	local bul=create_mob(17,x,y)
 	bul.pow=1
 	bul.dy=-2
 	bul.fra=rnd(27)\1
 	function bul:upd()
+		self.x +=dx
 		self.fra+=1
 		self.fra=self.fra%27
 		if self.x<-8 or
@@ -343,39 +354,48 @@ function update_game()
 end
 
 function input()
-	p.s=10
-	p.dx=0
-	p.dy=0
-		local speed=p.stime>0 and 1.25 or 1.875
+	local _ENV = p
+	s=10
+	dx=0
+	dy=0
+	local speed=stime>0 and 1.25 or 1.875
 	if btn(⬆️) then
-		p.dy=-speed
+		dy=-speed
 	end
 	if btn(⬇️) then
-		p.dy=speed
+		dy=speed
 	end
 	if btn(⬅️) then
-		p.dx=-speed
+		dx=-speed
 	end
 	if btn(➡️) then
-		p.dx=speed
+		dx=speed
 	end
-	if p.dx~=0 and p.dy~=0 then
-		p.dx*=0.707
-		p.dy*=0.707
+	if dx~=0 and dy~=0 then
+		dx*=0.707
+		dy*=0.707
 	end
-	if btn(❎) and p.stime<=0 then
+	if btn(❎) and stime<=0 then
 		sfx(63)
-		p.stime=10
-		local y=p.y-4
-		local x=p.x
-		if p.can then
-			x=x+4
+		stime=13
+		if rapid>0 then
+			stime=6
 		end
-		p.can=not p.can
+		local bully=y-4
+		local bullx=can and x+2 or x-2
 
-		create_pbul(x,y-12)
+		printh("bullx: " .. bullx .. " can:"..tostr(can))
+		can=not can
+
+		create_pbul(bullx,bully)
+		if spread >0 then 
+			create_pbul(bullx,bully,-0.5)
+			create_pbul(bullx,bully,0.5)
+		end
 		create_muz(p.x-1,p.y-12)
-
+	end
+	if btnp(🅾️) then 
+	--scene_limit
 	end
 end
 
@@ -430,11 +450,17 @@ function draw_game()
 	stripe(sc,63-w/2,0,split("7,12,12,6,13"))
 	
 	clip()
-	spr(58,113,0) -- print(2,121,0,7)
-	spr(57,104,8) -- print(3,99,10,7)
-	spr(59,120,8) -- print(1,123,17)
+	darkened_spr(str_shield,58,113,0) -- print(2,121,0,7)
+	darkened_spr(str_spread,57,104,8) -- print(3,99,10,7)
+	darkened_spr(str_rapid, 59,120,8) -- print(1,123,17)
 	pal()
-	print("🅾️", 114,10,7)
+	local col=1
+	if str_shield 
+	or str_spread
+	or str_rapid then
+		col=7
+	end
+	print("🅾️", 114,10,col)
 
 	-- print(#enmys, 64,64,7)
 	
@@ -442,6 +468,14 @@ function draw_game()
 --	print(#mobs,0,0,7)
 --	print(#buls)
 --	print(#enmys)
+end
+
+function darkened_spr(light, sp, x, y)
+	if not light then 
+		pal(split"1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")
+	end
+	spr(sp, x, y)
+	pal()
 end
 
 function draw_mobs()
@@ -802,11 +836,35 @@ function check_collision()
 				init_over()
 				return
 			end
-			invun=120
+			invun=80
 			flash=20
 			sfx(59)
 			shake=6
 		end
+	end
+	
+	local handlers = {
+		function()
+			if p.lives <5 then
+				p.lives += 1
+				printh("+lives")
+				float("+1", p.x,p.y-10,14)
+			else
+				float(2000, p.x,p.y-10,6)
+				printh("+Score")
+			end
+		end
+	}
+
+	for powerup in all(p_ups) do
+			if collided(powerup, p) then
+				
+				sfx(56)
+				remove(powerup)
+				if(handlers[powerup.typ]) then
+					handlers[powerup.typ]()
+				end
+			end
 	end
 	
 end
@@ -843,28 +901,48 @@ function draw_pparts()
 	end
 end
 
-function mob_to_ppart(obj)
+function mob_to_ppart(_ENV)
 	
-	local sp=obj.s
+	local sp=s
 	local xmin,ymin=(sp%16)*8,(sp\16)*8
-	local xmax,ymax=obj.w*8+xmin-1,obj.h*8+ymin-1
-	for x=xmin,xmax do
-		for y=ymin,ymax do
-			colour = sget(x,y)
+	local xmax,ymax=w*8+xmin-1,h*8+ymin-1
+	for _x=xmin,xmax do
+		for _y=ymin,ymax do
+			colour = sget(_x,_y)
 			--change if transparent
 			if colour!=0 then
 				dx = rnd(2)-1
 				dy = rnd(2)-1
 				life=rnd(20)+10
 				local p = create_ppart(
-					x-xmin+obj.x-obj.pw/2,
-					y-ymin+obj.y-obj.ph/2,
+					_x-xmin+x-pw/2,
+					_y-ymin+y-ph/2,
 					dx,dy,life,life,colour
 					)
 				add(pparts,p)
 			end
 		end
 	end
+end
+
+function float(txt,x,y,col)
+	local len = print(txt,0,-100,0)
+	local left = mid(0, x-len/2,128-len)
+	local life=30
+	add(pparts, {
+		update = function()
+			y=y-0.5
+			life=life-1
+			return life>0
+		end,
+		draw = function ()
+			print(txt, left-1,y,0)
+			print(txt, left+1,y,0)
+			print(txt, left,y-1,0)
+			print(txt, left,y+1,0)
+			print(txt, left,y,col)
+		end
+	})
 end
 
 function impact_pparts(x,y)
@@ -1282,7 +1360,7 @@ __sfx__
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00060000007000d750187502a750187502a7503375033700337403370033730337003372033700337103270032700007000070000700007000070000700007000070000700007000070000700007000070000700
 0101000023276282762a2562b2462b2462b03621026180260e0260d0260b0160d016150261e036240462903629026260261a0260f0260f0260f026110261602620026280262b0362a036230261e0161a00600006
 0a0200003b3502c35034350213502b350143502135007300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300003000030000300
 00010000306503065017150191501d150202502315026150291502915024250241502215014650146501b1501825017150151500000000000000000000000000082500b2500d2500e25010250112501225013250
