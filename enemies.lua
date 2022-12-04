@@ -15,7 +15,6 @@ function create_disc_e(_x,_y,_spl)
 	merge(_ENV, read_assoc("dy=1,sn=1,hp=1,escore=50"))
 	sprs=split("81,82,83,84")
 	spl=_spl
-
 	function upd(_ENV)
 		fra +=1
 		flash=max(0, flash-1)
@@ -23,13 +22,13 @@ function create_disc_e(_x,_y,_spl)
 			sn=sn%4+1
 			s=sprs[sn]
 		end
-		if y>130 then
+		if (fra/512 == 1) then 
 			remove(_ENV)
 		end
-
 	end
 	function move(_ENV)
-		merge(_ENV,spl(fra/300))
+
+		merge(_ENV,spl(fra/512))
 	end
 
 	return _ENV
@@ -256,6 +255,117 @@ function create_skull_e()
 	return e
 end
 
+function create_lazer_turret_e(_tx,_ty)
+	local _ENV=create_mob(45,96,-8,1,1)
+	hp=10
+	ang=0
+	ox=x
+	oy=y
+	tx,ty=_tx,_ty
+	rot_spd=0x.01
+	countdown=60+rnd(120)\1
+	toff=rnd()*10
+	olddraw=draw
+	prefiring=false
+	firing=false
+
+	function move()
+		local dir = atan2(tx-ox,ty-oy)
+		ox,oy=ox+cos(dir)*.5,oy+sin(dir)*.5
+		x,y=ox+16*cos(toff+t()/2),oy+16*sin(toff+t()/4) 
+	end
+	function upd(_ENV)
+		flash=max(0, flash-1)
+		local player_ang =
+			atan2(p.x-x,p.y-y)
+		local ang_diff=player_ang-ang
+		if abs(ang_diff)>0.5 then
+			ang_diff=-ang_diff
+		end
+		ang+=rot_spd*sgn(ang_diff)
+		ang%=1
+		
+		countdown=(countdown-1)%120
+		prefiring= countdown<60
+		if countdown==60 then
+			sfx(55)
+		end
+		if countdown<30 then
+			prefiring=false
+			firing=true
+		else firing =false
+		end
+	end
+
+	function draw(_ENV)
+
+		if flash>0 then
+			pal(lightenpal[1])
+		end
+		if flash>2 then
+			pal(lightenpal[2])
+		end
+
+		local ca,sa= cos(ang), sin(ang)
+		local xoff,yoff= ca*128, sa*128
+		if (prefiring) then
+			--rectfill(0,0,128,128,1)
+			
+			fillp(abs(xoff)>abs(yoff) and ▥ or ▤)
+			if (countdown<40) fillp()
+			line(x,y,x+xoff, y+yoff,countdown<45 and 8 or 2 )
+			fillp()
+		end
+
+		if (firing) then
+			local cx,cy=0,0
+			if abs(xoff)>abs(yoff) then
+				cy=1
+			else
+				cx=1
+			end
+
+			local c=9
+			line(x,y,x,y,0)
+			
+			for i=0, 128 do
+				local v=(i/10 - t()*7)%1
+				local partx,party= i, cos(v)*4
+				partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
+				line(partx,party, 2)
+			end
+
+			line(x-cx,y-cy,x-cx+xoff,y-cy+yoff,14)
+			line(x+cx,y+cy,x+cx+xoff,y+cy+yoff,14)
+			line(x,y, x+xoff,y+yoff,7)
+			if line_rect_isect(
+				x,y,x+xoff,y+yoff,
+				unpack(p:col())) then
+					hurt_player()
+			end
+
+			for i=0, 128, 0.5 do
+				local v=(i/10 - t()*7)%1
+				local c=9
+				if (v>0.45) then
+					local partx,party= i, cos(v)*4
+					partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
+					pset(partx, party, 8)
+				end
+			end
+		end
+		
+		circfill(x+cos(ang)*4, y+sin(ang)*4,3,1)
+		sspr(104,16,11,11,x-5,y-5)
+		pal()
+
+
+		draw_collision(_ENV)
+	end
+
+	return _ENV
+end
+
 function create_lazer_ebul(e)
 	sfx(58,3)
 	local _ENV=create_mob(86,e.x,e.y+8)
@@ -352,3 +462,17 @@ function spinshot(mob)
 	add(ebuls, _ENV)
 	add(mobs, _ENV)
 end
+
+function line_rect_isect(x0, y0, x1, y1, l, t, r, b)
+ local xm,ym=x1-x0,y1-y0
+ local tl, tr, tt, tb =
+  (l - x0) / xm,
+  (r - x0) / xm,
+  (t - y0) / ym,
+  (b - y0) / ym
+ return max(0, max(min(tl, tr), min(tt, tb))) <
+        min(1, min(max(tl, tr), max(tt, tb)))
+end
+
+--[sfx]0100004927492f4927492f492b4927492f6e186c166916661262165f145d125a165716541251144001400140014001400140014001400140014001400140014001400104050000[/sfx]
+--[sfx]01000049274a2f4b274b2f4c2b4e27502f7b1874166d1666125f165a14561252164d16491246144001400140014001400140014001400140014001400140014001400104050000[/sfx]
