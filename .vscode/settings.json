@@ -1,0 +1,16 @@
+{
+    "[pico-8]": {
+        "editor.rulers": [
+            32
+        ],
+        "editor.tabSize": 1,
+        "editor.insertSpaces": false
+    },
+    "[pico-8-lua]": {
+        "editor.rulers": [
+            32
+        ],
+        "editor.tabSize": 1,
+        "editor.insertSpaces": false
+    }
+}

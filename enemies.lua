@@ -9,12 +9,13 @@ function create_enemy(etype,x,y,props)
 	return e 
 end
 
-function create_disc_e(_x,_y,_spl)
+function create_disc_e(_x,_y,_spl,_dur)
 	local _ENV=create_mob(81,_x,_y)
 	
 	merge(_ENV, read_assoc("dy=1,sn=1,hp=1,escore=50"))
 	sprs=split("81,82,83,84")
 	spl=_spl
+	dur=_dur
 	function upd(_ENV)
 		fra +=1
 		flash=max(0, flash-1)
@@ -22,13 +23,13 @@ function create_disc_e(_x,_y,_spl)
 			sn=sn%4+1
 			s=sprs[sn]
 		end
-		if (fra/512 == 1) then 
+		if (fra/dur == 1) then 
 			remove(_ENV)
 		end
 	end
 	function move(_ENV)
 
-		merge(_ENV,spl(fra/512))
+		merge(_ENV,spl(fra/dur))
 	end
 
 	return _ENV

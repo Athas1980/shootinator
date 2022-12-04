@@ -5,8 +5,8 @@ __lua__
 --wes & bob
 
 --todo
---pickups
 --level intros
+-- hurt player fix
 --add enemy
 -- game over screen / death animation
 -- Add levels
@@ -62,7 +62,7 @@ function _init()
 		6=0,7=0,12=0
 	]]
 
-	splines={
+	spl_dat={
 		split[[93,-17,107,6,127,42,
 		121,68,121,68,116,92,88,125,
 		64,125,64,125,39,126,2,94,3,
@@ -84,9 +84,7 @@ function _init()
 		split[[40,128,56,127,88,126,88,108,88,108,88,89,40,103,40,84,40,84,40,66,88,82,88,64,88,64,88,44,39,55,40,35,40,35,41,16,89,29,88,11,88,11,87,-10,59,-9,41,-11]]
 
 	}
-	spline=read_spline(splines[3])
-	spline2=read_spline(flip_pts_x(splines[1]))
-	spinspline=read_spline(splines[2])
+	splines=read_splines(spl_dat)
 	shake=0
 	distance_blocked=false
 
@@ -101,7 +99,7 @@ function _init()
 yOU'LL NEVER DEFEAT US 
 IN THAT SHIP, WE
 DESIGNED.
-...]], 1},		
+...]], 1},
 		{[[
 ...
 iT CAN'T EVEN GO FULL 
@@ -476,6 +474,7 @@ function draw_game()
 print(shots, 0,0,7)
 print(hits)
 print(kills)
+print(lives)
 end
 
 function darkened_spr(light, sp, x, y)
@@ -600,6 +599,16 @@ function cub_bez(p1,p2,p3,p4,t)
 	t)}
 end
 
+
+
+function read_splines(spl_dat)
+	local splines={}
+	for i=1,#spl_dat do
+		add(splines, read_spline(spl_dat[i]))
+		add(splines, read_spline(flip_pts_x(spl_dat[i])))
+	end
+	return splines
+end
 --read splines
 --expected table with multiple
 --of 8 entries.
