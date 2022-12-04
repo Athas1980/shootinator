@@ -24,20 +24,30 @@ local level = [[
 00,4,a6
 00,4,86
 
+-- powerup
+0a,7,99
+
 -- four at left low
 14,4,18
 00,4,38
 00,4,58
 00,4,78
+
+-- five at right
 14,4,f4
 00,4,d4
 00,4,c4
 00,4,a4
 00,4,84
+
+--four at left
 14,4,18
 00,4,38
 00,4,58
 00,4,78
+
+0a,9,88
+
 14,4,f4
 00,4,d4
 00,4,c4
@@ -200,6 +210,14 @@ function read_disc(fn_next)
 	end
 end
 
+function read_p_up(idx, fn_next)
+	local byte=fn_next()
+	local x,y=((byte&0xf0)>>>4)*8, (byte&0xf)*8
+	return function()
+		create_powerup(idx, x, y)
+	end
+end
+
 local dist=0
 finished=false
 while finished==false do
@@ -233,6 +251,15 @@ while finished==false do
 				distance_spawn[dist]=fn
 			end
 		end
+
+		if value>5 and value <10 then
+			local fn=read_p_up(value-5, next)
+			if distance_spawn[dist] then 
+				distance_spawn[dist] = append(fn, distance_spawn[dist])
+			else 
+				distance_spawn[dist]=fn
+			end
+		end 
 	end
 end
 
