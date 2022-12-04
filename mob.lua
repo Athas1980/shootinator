@@ -67,6 +67,7 @@ function def_hurt(_ENV, pow)
 				flash=5
 				hp-=pow
 				if hp <= 0 then
+					_g.kills+=1
 					die(_ENV)
 				else 
 					sfx(61)
