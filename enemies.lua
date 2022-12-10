@@ -375,7 +375,7 @@ function create_lazer_ebul(e)
 	function upd(_ENV)
 		f+=1
 		if (f>0) then
-				dy=max(f/30,2)
+				dy=max(f/60,1.5)
 		else 
 			x=e.x
 		end
