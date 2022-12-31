@@ -256,13 +256,13 @@ function create_skull_e()
 	return e
 end
 
-function create_lazer_turret_e(_tx,_ty)
-	local _ENV=create_mob(45,96,-8,1,1)
+function create_lazer_turret_e(_x,_y,props)
+	local _ENV=create_mob(45,_x,_y,1,1)
 	hp=10
 	ang=0
 	ox=x
 	oy=y
-	tx,ty=_tx,_ty
+	tx,ty=unpack(props)
 	rot_spd=0x.01
 	countdown=60+rnd(120)\1
 	toff=rnd()*10
@@ -273,7 +273,7 @@ function create_lazer_turret_e(_tx,_ty)
 	function move()
 		local dir = atan2(tx-ox,ty-oy)
 		ox,oy=ox+cos(dir)*.5,oy+sin(dir)*.5
-		x,y=ox+16*cos(toff+t()/2),oy+16*sin(toff+t()/4) 
+		x,y=ox+8*cos(toff+t()/2),oy+8*sin(toff+t()/4) 
 	end
 	function upd(_ENV)
 		flash=max(0, flash-1)
@@ -289,7 +289,7 @@ function create_lazer_turret_e(_tx,_ty)
 		countdown=(countdown-1)%120
 		prefiring= countdown<60
 		if countdown==60 then
-			sfx(55)
+			sfx(54)
 		end
 		if countdown<30 then
 			prefiring=false

@@ -33,7 +33,10 @@ local level = [[
 00,4,86
 
 -- powerup
+0a,6,99
 0a,7,99
+0a,8,99
+0a,9,99
 
 -- four at left low
 14,4,18
@@ -188,7 +191,14 @@ local level = [[
 
 ]]
 
---In the end this should just be a sequence of bytes
+level = [[
+
+01,a,80,88
+
+]]
+
+--In the end this should just be
+--a sequence of bytes
 --so it can be converted later
 local dat={}
 for row in all(split(level,"\n")) do
@@ -260,6 +270,27 @@ function read_p_up(idx, fn_next)
 	end
 end
 
+function read_lazer_turret(fn_next)
+	printh("reading lazer")
+	local byte = fn_next()
+	local x,y=((byte&0xf0)>>>4)*8, (byte&0xf)*8
+	printh("x:".. x.. " y:"..y)
+	if x==0 then x=-8	end
+	if y==0 then	y=-8	end
+	if x==120 then x=132 end
+	if y==120 then y=132 end
+	byte=fn_next()
+	local tx,ty=((byte&0xf0)>>>4)*8, (byte&0xf)*8
+	printh("tx:".. tx.. " ty:"..ty)
+	return function() 
+		printh("Spawning lazer")
+		local en = create_enemy(
+			"lazer_turret",x,y,{tx,ty}
+		)
+		add(mobs,en)
+	end
+end
+
 local dist=0
 finished=false
 while finished==false do
@@ -267,6 +298,7 @@ while finished==false do
 	if (d==nil or value == nil) then
 		finished=true
 	else
+		-- printh("d:"..d.." value:"..value)
 		dist+=d*8
 		if value==1 then
 			local fn=read_flap(next)
@@ -301,7 +333,17 @@ while finished==false do
 			else 
 				distance_spawn[dist]=fn
 			end
-		end 
+		end
+
+		
+		if value==0xa then
+			local fn=read_lazer_turret(next)
+			if distance_spawn[dist] then 
+				distance_spawn[dist] = append(fn, distance_spawn[dist])
+			else 
+				distance_spawn[dist]=fn
+			end
+		end
 	end
 end
 
