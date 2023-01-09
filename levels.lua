@@ -191,11 +191,11 @@ local level = [[
 
 ]]
 
-level = [[
+-- level = [[
 
-01,a,80,88
+-- 01,a,80,88
 
-]]
+-- ]]
 
 --In the end this should just be
 --a sequence of bytes
