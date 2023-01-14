@@ -191,11 +191,11 @@ local level = [[
 
 ]]
 
--- level = [[
+level = [[
 
--- 01,a,80,88
-
--- ]]
+01,a,80,88
+3f,b,3,90
+]]
 
 --In the end this should just be
 --a sequence of bytes
@@ -248,6 +248,15 @@ function read_flap(fn_next)
 	local en = create_enemy("flap", x, -8, ty)
 	en.hp=hp
 	add(mobs,en)
+	end
+end
+
+function read_spin(fn_next)
+	local num,dur=fn_next(),fn_next()*4
+	return function()
+		local en = create_enemy("spin", 128,-8, splines[num], dur)
+		en.dur=dur
+		add(mobs,en)
 	end
 end
 
@@ -344,6 +353,16 @@ while finished==false do
 				distance_spawn[dist]=fn
 			end
 		end
+
+		if value==0xb then
+			local fn=read_spin(next)
+			if distance_spawn[dist] then 
+				distance_spawn[dist] = append(fn, distance_spawn[dist])
+			else 
+				distance_spawn[dist]=fn
+			end
+		end
+
 	end
 end
 

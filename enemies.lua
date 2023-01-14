@@ -144,30 +144,45 @@ function create_blob_e(x1,y1,ty1)
 	return _ENV
 end
 
-
-function create_spin_e(_x,_y)
+-- FIXME logic for this is
+-- the same as a disc
+function create_spin_e(_x,_y,_spl,_dur)
 	local _ENV=create_mob(106,_x,_y)
+
+	shot_times={60,10,10}
+	t_idx=1
+	local shot_time=shot_times[1]
+	
 	merge(_ENV, read_assoc(
 		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
 	))
 	sprs=split("96,98,100,102")
-	spl=spinspline
+	spl=_spl
 	
 	function upd(_ENV)
+		shot_time-=1
+		if shot_time<0 then 
+			--shoot
+			shot_time=shot_times[t_idx]
+			t_idx=(t_idx + 1)%#shot_times +1
+			create_aim_ebul(_ENV)
+		end
 		fra +=1
 		flash=max(0, flash-1)
 		if fra%8==0 then
 			sn=sn%3+1
 			s=sprs[sn]
 		end
-		if y>130 then
+		if (fra/dur == 1) then 
 			remove(_ENV)
 		end
+
+
 
 	end
 
 	function move(_ENV)
-		merge(_ENV,spl(fra/900))
+		merge(_ENV,spl(fra/dur))
 	end
 
 	return _ENV
@@ -379,6 +394,36 @@ function create_lazer_ebul(e)
 		else 
 			x=e.x
 		end
+		if y>130 then
+			remove(_ENV)
+		end
+	end
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
+end
+
+function create_aim_ebul(e)
+	sfx(58,3)
+	local _ENV=create_mob(64,e.x,e.y+8)
+	sprs = {64,80}
+	f=-5;
+	e.flash=20;
+	sn=0
+	
+	local ang = atan2(p.x-e.x, p.y-e.y)
+	dx,dy=cos(ang)*1.5,sin(ang)*1.5
+	function upd(_ENV)
+		f+=1
+
+		if fra%30==0 then
+			sn=sn%2+1
+			s=sprs[sn]
+		end
+
+		sp = sprs[fra\6%2]
+		-- sp=fra
+		-- FIXME need a more
+		-- omprehensive out of bounds
 		if y>130 then
 			remove(_ENV)
 		end
