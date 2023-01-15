@@ -146,9 +146,8 @@ end
 
 -- FIXME logic for this is
 -- the same as a disc
-function create_spin_e(_x,_y,_spl,_dur)
+function create_spin_e(_x,_y,props)
 	local _ENV=create_mob(106,_x,_y)
-
 	shot_times={60,10,10}
 	t_idx=1
 	local shot_time=shot_times[1]
@@ -157,7 +156,7 @@ function create_spin_e(_x,_y,_spl,_dur)
 		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
 	))
 	sprs=split("96,98,100,102")
-	spl=_spl
+	spl,dur=unpack(props)
 	
 	function upd(_ENV)
 		shot_time-=1
@@ -405,9 +404,11 @@ end
 function create_aim_ebul(e)
 	sfx(58,3)
 	local _ENV=create_mob(64,e.x,e.y+8)
+	colw=2
+	colh=2
 	sprs = {64,80}
 	f=-5;
-	e.flash=20;
+	e.flash=5;
 	sn=0
 	
 	local ang = atan2(p.x-e.x, p.y-e.y)
@@ -415,12 +416,13 @@ function create_aim_ebul(e)
 	function upd(_ENV)
 		f+=1
 
-		if fra%30==0 then
+		fra+=1
+		if fra%5==0 then
 			sn=sn%2+1
 			s=sprs[sn]
+			printh("fra:"..fra.." s:"..s)
 		end
 
-		sp = sprs[fra\6%2]
 		-- sp=fra
 		-- FIXME need a more
 		-- omprehensive out of bounds

@@ -889,16 +889,8 @@ function check_collision()
 		end
 	end
 	for eb in all(ebuls) do 
-			if collided(eb,p) and invun<=0 then
-			lives-=1
-			if lives<0 then
-				init_over()
-				return
-			end
-			invun=80
-			flash=20
-			sfx(59)
-			shake=6
+			if collided(eb,p) then
+				hurt_player()
 		end
 	end
 	
@@ -955,6 +947,11 @@ function hurt_player()
 	flash=20
 	sfx(59)
 	shake=6
+	if lives<0 then
+		init_over()
+		return
+	end
+	
 end
 
 function collided(mob1,mob2)

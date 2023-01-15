@@ -192,9 +192,28 @@ local level = [[
 ]]
 
 level = [[
+-- lazer
+-- 01,a,80,88
+-- spin & tail
+1,b,3,c0
+2,5,3,c0
+2,5,3,c0
+2,5,3,c0
+2,5,3,c0
+-- spin & tail
+15,b,4,c0
+2,5,4,c0
+2,5,4,c0
+2,5,4,c0
+2,5,4,c0
 
-01,a,80,88
-3f,b,3,90
+
+60,b,3,a0
+0,4,22
+0,4,43
+0,4,62
+0,4,83
+
 ]]
 
 --In the end this should just be
@@ -254,8 +273,9 @@ end
 function read_spin(fn_next)
 	local num,dur=fn_next(),fn_next()*4
 	return function()
-		local en = create_enemy("spin", 128,-8, splines[num], dur)
-		en.dur=dur
+		local en = create_enemy("spin", 128,-8, {splines[num], dur})
+		-- en = create_spin_e(128,-8,splines[num],dur)
+		-- en.dur=dur
 		add(mobs,en)
 	end
 end
