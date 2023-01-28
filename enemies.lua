@@ -106,7 +106,9 @@ function create_flap_e(x1,y1,target_y)
 	end
 	return e
 end
-
+--- flips all the x points
+-- @param pts The points to mirror
+-- @return a table with flipped string
 function flip_pts_x(pts)
 	local output={}
 	for i=1,#pts,2 do
