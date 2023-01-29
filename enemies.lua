@@ -285,6 +285,7 @@ function create_lazer_turret_e(_x,_y,props)
 	olddraw=draw
 	prefiring=false
 	firing=false
+	max_countdown=120
 
 	function move()
 		local dir = atan2(tx-ox,ty-oy)
@@ -302,7 +303,8 @@ function create_lazer_turret_e(_x,_y,props)
 		ang+=rot_spd*sgn(ang_diff)
 		ang%=1
 		
-		countdown=(countdown-1)%120
+		countdown=(countdown-1)%max_countdown
+		printh(countdown)
 		prefiring= countdown<60
 		if countdown==60 then
 			sfx(54)
@@ -380,6 +382,32 @@ function create_lazer_turret_e(_x,_y,props)
 		draw_collision(_ENV)
 	end
 
+	return _ENV
+end
+
+function lerp(v,tv,t)
+	return v +(tv-v)*t
+end
+
+function create_static_turret_e
+		(_x,_y,props)
+	local _ENV=create_lazer_turret_e
+		(_x,_y,props)
+	_,_,ang,countdown,life=
+		unpack(props)
+		max_countdown=countdown
+		printh("x:"..x.." y:"..y.." ang:"..ang.." tx:"..tx.." ty:"..ty)
+	f,rot_spd=0,0
+	function move()
+		f+=1
+		if f>life then
+			remove(_ENV)
+		end
+		if f<120 then
+			x=lerp(x,tx,f/120)
+			y=lerp(y,ty,f/120)
+		end
+	end
 	return _ENV
 end
 

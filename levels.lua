@@ -1,16 +1,12 @@
--- for byte in all(dat) do
---  printh(byte)
--- end
 local l1st,l1end=0x2102,
-	peek2(0x2100)+0x2102
-local l2end=peek2(l1end+1)+l1end
+	peek2(0x2100)+0x2101
+local l2end=peek2(l1end+1)+l1end+2
 
 function level_iter(start, max)
 	local i=start-1
 	return function()
 		i+=1
-		if (i>max) return nil
-		return peek(i)
+		return i<=max and peek(i) or nil
 	end
 end
 
@@ -37,16 +33,17 @@ setmetatable(distance_spawn,
 	end}
 )
 
--- local next=level_iter(l1st,
---  l1end)
-local next=level_iter(l1end+2,
- l2end)
-
-
+local next=level_iter(l1st,
+ l1end)
+local next=level_iter(l1end+3,l2end)
 
 function nybles_x_8(byte)
 	return ((byte&0xf0)>>>4)*8,
 		(byte&0xf)*8
+end
+function nybles(byte)
+		return (byte&0xf0)>>>4,
+			byte&0xf
 end
 
 function noop() end
@@ -114,11 +111,31 @@ function read_lazer_turret(iter)
 		add(mobs,en)
 	end
 end
+--_,_,ang,countdown,life
+
+function read_static(iter)
+	local x,y=nybles_x_8(iter())
+	local tx,ty=nybles_x_8(iter())
+	local ang=nybles(iter())/16
+	local countdown=iter()*4
+	local life=iter()*4
+	if x==0 then x=-8 end
+	if y==0 then y=-8 end
+	if x==120 then x=132 end
+	if y==120 then y=132 end
+
+	return function() 
+		local en = create_enemy(
+			"static_turret",x,y,
+			{tx,ty,ang,countdown,life}
+		)
+		add(mobs,en)
+	end
+end
 
 local funcs={
-	[0]=noop,
 	read_flap, --1
-	noop, --2
+	read_static, --2
 	noop, --3
 	read_green, --4
 	read_disc,--5
@@ -138,7 +155,6 @@ while finished==false do
 		finished=true
 	else
 		dist+=d*8
-		printh("Value:"..tostr(value,true))
 		local fn=funcs[value](next, value)
 		distance_spawn += {dist, fn}
 	end

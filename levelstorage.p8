@@ -195,7 +195,8 @@ local levels = {[[
 ]],
 [[
 -- lazer
-01,a,80,88
+01,2,f8,d8,a0,20,ff
+ff,a,80,88
 -- spin & tail
 60,b,3,c0
 2,5,3,c0
@@ -236,11 +237,13 @@ for level in all(levels) do
 		stop("data to big")
 	end
 	poke2(start, #dat)
+	printh("start"..tostr(start,true).." len"..tostr(#dat,true))
 	poke(start+2, unpack(dat))
 	
 	start = start+#dat+2
 end
 cstore(0x2000, 0x2000, 0xfff, "shootinator.p8")
+load("shootinator.p8", "back to levels")
 __map__
 e6e7f6f7eeefe7f7e7e6f7f7e7cecff7e7f6f7e6fefff6ecedf7f6e7e6dedfe7f7f6cccde7f7f7fcfde7f6eeeff7f7e6e6e7dcddf6e6e6f7f7e6e7feffe7e6e7e7e6f6f7eeefe7e6e7f7e6e7f7f7e6cef7ecedf6fefff7e7e6cef7e7f7eff6e7e7fcfde7f7e7f6f6f7f6f6e7e6cecfe6e7f7f6ecedf7e6f7e6e7e6eee7dedff7
 e6e7f7fcfdf6e7e6e7e6e7f7f7e7f7e6e6f7e7f6cccde6e7eeefe6e7e7efcee7e6e7cecfdcdde7e7feffe7f7e6e6e6e7e6f7dedff7f7f7e7f7e6cccde7e6e6e6f7e6f7e7e6f7eff7e6f7dcddf7f6f7f7e7f7e7f7eee7e6e7e7e7e7e7f7ecede7e7e6f7e7e7e7e6e7cecfe6e7f6fcfde6e6e7f7eff7f7f6f7dedff7eef7e6e6e7
