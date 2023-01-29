@@ -563,6 +563,17 @@ function merge(t1,t2)
 	return t1
 end
 
+--Adds all sequence values
+function addall(t1,t2)
+	t1=t1 or {}
+	t2.foreach(
+		function(v)
+			add(t1,v)
+		end
+	)
+	return t1
+end
+
 --reads multiple assoc tables
 function read_kv_arr(str)
 	local tbls=split(str,"|")

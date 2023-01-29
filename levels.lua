@@ -37,6 +37,8 @@ setmetatable(distance_spawn,
 	end}
 )
 
+-- local next=level_iter(l1st,
+--  l1end)
 local next=level_iter(l1end+2,
  l2end)
 
@@ -46,6 +48,8 @@ function nybles_x_8(byte)
 	return ((byte&0xf0)>>>4)*8,
 		(byte&0xf)*8
 end
+
+function noop() end
 
 function read_green(iter)
 	local x,ty=nybles_x_8(iter())
@@ -89,17 +93,17 @@ function read_disc(iter)
 	end
 end
 
-function read_p_up(idx, iter)
+function read_p_up(iter,idx)
 	local x,y=nybles_x_8(iter())
 	return function()
-		create_powerup(idx, x, y)
+		create_powerup(idx-5, x, y)
 	end
 end
 
 function read_lazer_turret(iter)
 	local x,y=nybles_x_8(iter())
-	if x==0 then x=-8	end
-	if y==0 then	y=-8	end
+	if x==0 then x=-8 end
+	if y==0 then y=-8 end
 	if x==120 then x=132 end
 	if y==120 then y=132 end
 	local tx,ty=nybles_x_8(iter())
@@ -111,6 +115,21 @@ function read_lazer_turret(iter)
 	end
 end
 
+local funcs={
+	[0]=noop,
+	read_flap, --1
+	noop, --2
+	noop, --3
+	read_green, --4
+	read_disc,--5
+	read_p_up, --6
+	read_p_up, --7
+	read_p_up, --8
+	read_p_up, --9
+	read_lazer_turret, --a
+	read_spin,--b
+}
+
 local dist=0
 finished=false
 while finished==false do
@@ -119,67 +138,9 @@ while finished==false do
 		finished=true
 	else
 		dist+=d*8
-		if value==1 then
-			local fn=read_flap(next)
-			if distance_spawn[dist] then
-				distance_spawn[dist]=
-				append(fn, distance_spawn[dist])
-			else 
-				distance_spawn[dist]=fn
-			end
-		end
-		if value==4 then
-			local fn=read_green(next)
-			if distance_spawn[dist] then 
-				distance_spawn[dist]=
-				append(fn, distance_spawn[dist])
-			else 
-				distance_spawn[dist]=fn
-			end
-		end
-
-		if value==5 then
-			local fn=read_disc(next)
-			if distance_spawn[dist] then 
-				distance_spawn[dist]=
-				append(fn, distance_spawn[dist])
-			else 
-				distance_spawn[dist]=fn
-			end
-		end
-
-		if value>5 and value <10 then
-			local fn=read_p_up(value-5, next)
-			if distance_spawn[dist] then 
-				distance_spawn[dist]=
-				append(fn, distance_spawn[dist])
-			else 
-				distance_spawn[dist]=fn
-			end
-		end
-
-		
-		if value==0xa then
-			local fn=read_lazer_turret(next)
-			distance_spawn += {dist, fn}
-			-- if distance_spawn[dist] then 
-			-- 	_= distance_spawn + {dist,fn}
-			-- 	-- append(fn, distance_spawn[dist])
-			-- else 
-			-- 	distance_spawn[dist]=fn
-			-- end
-		end
-
-		if value==0xb then
-			local fn=read_spin(next)
-			if distance_spawn[dist] then 
-				distance_spawn[dist]
-				=append(fn, distance_spawn[dist])
-			else 
-				distance_spawn[dist]=fn
-			end
-		end
-
+		printh("Value:"..tostr(value,true))
+		local fn=funcs[value](next, value)
+		distance_spawn += {dist, fn}
 	end
 end
 
