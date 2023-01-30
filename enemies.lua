@@ -304,7 +304,6 @@ function create_lazer_turret_e(_x,_y,props)
 		ang%=1
 		
 		countdown=(countdown-1)%max_countdown
-		printh(countdown)
 		prefiring= countdown<60
 		if countdown==60 then
 			sfx(54)
@@ -326,7 +325,7 @@ function create_lazer_turret_e(_x,_y,props)
 		end
 
 		local ca,sa= cos(ang), sin(ang)
-		local xoff,yoff= ca*128, sa*128
+		local xoff,yoff= ca*200, sa*200
 		if (prefiring) then
 			--rectfill(0,0,128,128,1)
 			
@@ -347,7 +346,7 @@ function create_lazer_turret_e(_x,_y,props)
 			local c=9
 			line(x,y,x,y,0)
 			
-			for i=0, 128 do
+			for i=0, 200 do
 				local v=(i/10 - t()*7)%1
 				local partx,party= i, cos(v)*4
 				partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
@@ -396,17 +395,28 @@ function create_static_turret_e
 	_,_,ang,countdown,life=
 		unpack(props)
 		max_countdown=countdown
-		printh("x:"..x.." y:"..y.." ang:"..ang.." tx:"..tx.." ty:"..ty)
 	f,rot_spd=0,0
 	function move()
 		f+=1
+		printh("life:"..life.." f:"..f.."life-120:".."life")
 		if f>life then
 			remove(_ENV)
 		end
 		if f<120 then
-			x=lerp(x,tx,f/120)
-			y=lerp(y,ty,f/120)
+			x=lerp(x,tx,easeinoutquart(f/120))
+			y=lerp(y,ty,easeinoutquart(f/120))
 		end
+		if f+120>life then
+			printh(((120+f-life)/120))
+			x=lerp(tx,_x,easeinoutquart((120+f-life)/120))
+			y=lerp(ty,_y,easeinoutquart((120+f-life))/120)
+		end
+	end
+
+	olddraw = draw
+	function draw()
+		olddraw(_ENV)
+		print(tostr(ang*16,true)[6], x,y,7)
 	end
 	return _ENV
 end
@@ -450,7 +460,6 @@ function create_aim_ebul(e)
 		if fra%5==0 then
 			sn=sn%2+1
 			s=sprs[sn]
-			printh("fra:"..fra.." s:"..s)
 		end
 
 		-- sp=fra

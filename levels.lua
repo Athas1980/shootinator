@@ -160,7 +160,6 @@ while finished==false do
 	end
 end
 
-printh("total_dist::"..dist)
 total_dist=dist
 
 
