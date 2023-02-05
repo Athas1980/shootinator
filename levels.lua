@@ -12,29 +12,20 @@ end
 
 local distance_spawn={}
 
-local function append(f2, f1)
-	return function() f1() f2() end
+function add_dat(dist, fn) 
+	local existing=distance_spawn[dist]
+	local to_add=fn
+	if (existing) then
+		to_add= function()
+			fn()
+			existing()
+		end
+		end
+		distance_spawn[dist]=to_add
 end
 
-setmetatable(distance_spawn,
-	{__add = 
-	function(ds, tbl)
-		local idx,fn = unpack(tbl)
-		local existing= ds[idx]
-		local to_add=fn
-		if (existing) then
-			to_add= function()
-				fn()
-				existing()
-			end
-			end
-		ds[idx]=to_add
-		return ds
-	end}
-)
-
-local next=level_iter(l1st,
- l1end)
+-- local next=level_iter(l1st,
+--  l1end)
 local next=level_iter(l1end+3,l2end)
 
 function nybles_x_8(byte)
@@ -51,8 +42,9 @@ function noop() end
 function read_green(iter)
 	local x,ty=nybles_x_8(iter())
 	return function()
-		add(mobs,create_enemy(
-			"green", x, -8, ty))
+		local en = create_green_e(x,ty)
+		add(mobs, en)
+		add(enmys, en)
 	end
 end
 
@@ -60,33 +52,31 @@ function read_flap(iter)
 	local x,ty=nybles_x_8(iter())
 	local hp = iter()
 	return function()
-	local en = create_enemy(
-		"flap", x, -8, ty)
-	en.hp=hp
-	en.escore=hp*100
+	local en = create_flap_e(x,ty,hp)
 	add(mobs,en)
+	add(enmys, en)
 	end
 end
 
 function read_spin(iter)
 	local num,dur=iter(),iter()*4
 	return function()
-		local en = create_enemy(
-			"spin",
-			128,-8,
-			{splines[num], dur})
+		local en = create_spin_e(
+			num, dur)
 		add(mobs,en)
+		add(enmys, en)
 	end
 end
 
 function read_disc(iter)
 	local num,dur=iter(),iter()*4
 	return function()
-		local en = create_enemy(
-			"disc",98,-8, splines[num]
+		local en = create_disc_e(
+			num,dur
 		)
 		en.dur=dur
 		add(mobs,en)
+		add(enmys,en)
 	end
 end
 
@@ -105,9 +95,10 @@ function read_lazer_turret(iter)
 	if y==120 then y=132 end
 	local tx,ty=nybles_x_8(iter())
 	return function() 
-		local en = create_enemy(
-			"lazer_turret",x,y,{tx,ty}
+		local en = create_lazer_turret_e(
+			x,y,tx,ty
 		)
+		add(enmys,en)
 		add(mobs,en)
 	end
 end
@@ -125,10 +116,11 @@ function read_static(iter)
 	if y==120 then y=132 end
 
 	return function() 
-		local en = create_enemy(
-			"static_turret",x,y,
-			{tx,ty,ang,countdown,life}
+		local en = create_static_turret_e(
+			x,y,tx,ty,ang,countdown,life
 		)
+
+		add(enmys,en)
 		add(mobs,en)
 	end
 end
@@ -147,16 +139,15 @@ local funcs={
 	read_spin,--b
 }
 
-local dist=0
-finished=false
+local dist,finished=0,false
 while finished==false do
-	local d,value=next(),next()
-	if d==nil or value == nil then
+	local d,val=next(),next()
+	if d==nil or val == nil then
 		finished=true
 	else
 		dist+=d*8
-		local fn=funcs[value](next, value)
-		distance_spawn += {dist, fn}
+		local fn=funcs[val](next, val)
+		add_dat(dist, fn)
 	end
 end
 
@@ -164,4 +155,6 @@ total_dist=dist
 
 
 level_dat = distance_spawn
+
+printh("len:"..#level_dat)
 

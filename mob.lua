@@ -8,7 +8,7 @@ function create_mob(s,x,y,w,h)
 	local mob={
 		s=s,
 		x=x or 64,
-		y=y or 64,
+		y=y or -8,
 		w=w,
 		h=h,
 		pw=w*8,
@@ -21,20 +21,26 @@ function create_mob(s,x,y,w,h)
 		col=def_col,
 		hurt=def_hurt,
 		die=def_die,
-		hp=1,
-		escore=100,
-		fra=0,
-		coffx=0,
-		coffy=0,
-		flash=0
 	}
-	setmetatable(mob,{__index=_ENV})
+	merge(mob,read_assoc("hp=1,escore=100,fra=0,coffx=0,coffy=0,flash=0"))
+	setmetatable(mob,{__index=_ENV,
+	__tostring= function(self)
+		local str=""
+		for k,v in pairs(self) do
+			if str ~="" then 
+				str..="\n"
+			end
+			str..=k..":"..tostr(v)
+		end
+		return str
+	end
+})
 	return mob
 end
 
 function def_move(_ENV)
-		x+=dx
-		y+=dy
+		x+=dx*spd
+		y+=dy*spd
 end
 
 function def_draw(_ENV)
@@ -54,7 +60,7 @@ function def_col(_ENV)
 		local col_height=colh or ph-1
 		local coffx=coffx or 0
 		local coffy=coffy or 0
-		local l,t=x-col_width/2,y+coffy-col_height/2
+		local l,t=x+coffx-col_width/2,y+coffy-col_height/2
 		return {
 			l,
 			t,

@@ -23,7 +23,7 @@ function create_player()
 		x = mid(4,x,123)
 		y = mid(4,y,123)
 		if stime>0 then
-			stime=stime-1
+			stime=stime-spd
 		end
 		if dx<0 then
 			mov-=1
@@ -45,7 +45,7 @@ function create_player()
 		colw=pw-2*coffx
 		soffx=-pw/2
 
-		if lives and lives <2 then
+		if lives and lives<2 and d<total_dist then
 
 			add(pparts, 
 			create_ppart(
@@ -143,10 +143,12 @@ end
 function create_powerup(_typ, _x,_y)
 	pu=create_mob(_typ+55,_x,_y)
 	pu.typ=_typ
-	pu.pw=12
-	pu.ph=10
-	pu.dy=0.25
-	pu.life=240
+	merge(pu, read_assoc(
+		"pd=12,ph=10,dy=0.25,life=240")
+	)
+	printh("Powerup")
+	printh(pu)
+	
 	function pu.draw(_ENV)
 		if (life<60 and (f/2)%2 == 0)
 			or (life<30 and (f/3)%2 >0)

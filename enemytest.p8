@@ -407,6 +407,7 @@ function input()
 	p.dx=0
 	p.dy=0
 	local speed=p.stime>0 and 1 or 1.5
+	speed=speed*spd
 	if btn(⬆️) then
 		p.dy=-speed
 	end

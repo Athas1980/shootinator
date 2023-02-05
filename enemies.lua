@@ -3,18 +3,17 @@ function create_enemy(etype,x,y,props)
 	local e=_ENV[
 	"create_"..etype.."_e"]
 	(x,y,props)
-	e.flash=0
 	add(enmys,e)
 	
 	return e 
 end
 
-function create_disc_e(_x,_y,_spl,_dur)
-	local _ENV=create_mob(81,_x,_y)
+function create_disc_e(_spl,_dur)
+	local _ENV=create_mob(81)
 	
 	merge(_ENV, read_assoc("dy=1,sn=1,hp=1,escore=50"))
 	sprs=split("81,82,83,84")
-	spl=_spl
+	spl=splines[_spl]
 	dur=_dur
 	function upd(_ENV)
 		fra +=1
@@ -35,14 +34,17 @@ function create_disc_e(_x,_y,_spl,_dur)
 	return _ENV
 end
 
-function create_flap_e(x1,y1,target_y)
+function create_flap_e(x1,target_y,_hp)
 
-	local e=create_mob(93,x1,y1)
+	local e=create_mob(93,x1,-8)
 	local props=read_assoc("escore=100,dy=1,sn=1,hp=2,frict=0.98,accel=0.1")
+
 	
 	merge(e,props)
 	
 	local _ENV = e
+	e.hp = _hp
+	e.escore = 100*_hp 
 	sprs=split("93,94,95,94")
 	fsprs=split("77,78,79")
 	targety=target_y or 32
@@ -148,8 +150,8 @@ end
 
 -- FIXME logic for this is
 -- the same as a disc
-function create_spin_e(_x,_y,props)
-	local _ENV=create_mob(106,_x,_y)
+function create_spin_e(_spl,_dur)
+	local _ENV=create_mob(106)
 	shot_times={60,10,10}
 	t_idx=1
 	local shot_time=shot_times[1]
@@ -158,7 +160,7 @@ function create_spin_e(_x,_y,props)
 		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
 	))
 	sprs=split("96,98,100,102")
-	spl,dur=unpack(props)
+	spl,dur=splines[_spl],_dur
 	
 	function upd(_ENV)
 		shot_time-=1
@@ -170,8 +172,8 @@ function create_spin_e(_x,_y,props)
 		end
 		fra +=1
 		flash=max(0, flash-1)
-		if fra%8==0 then
-			sn=sn%3+1
+		if fra%4==0 then
+			sn=sn%4+1
 			s=sprs[sn]
 		end
 		if (fra/dur == 1) then 
@@ -190,8 +192,8 @@ function create_spin_e(_x,_y,props)
 end
 
 
-function create_green_e(x1, y1, ty1)
-	local _ENV=create_mob(65,x1,y1)
+function create_green_e(x1, ty1)
+	local _ENV=create_mob(65,x1)
 	merge (_ENV, read_assoc(
 		"dy=0.5,w=1,h=1,hp=3,wait=180,wait_dec=0,sn=1,wiggle=2,escore=200"
 	))
@@ -240,45 +242,44 @@ function create_green_e(x1, y1, ty1)
 	return _ENV
 end
 
-function create_launcher_e()
-	local e=create_mob(131,128,64,3,2)
-	e.hp=10
-	olddraw=e.draw
-	function e:upd()
-		self.fra +=1
-		self.flash=max(0, self.flash-1)
-	end
-	function e:draw()
-			palt(0,false)
-			palt(14,true)
-			olddraw(self)
+-- function create_launcher_e()
+-- 	local e=create_mob(131,128,64,3,2)
+-- 	e.hp=10
+-- 	olddraw=e.draw
+-- 	function e:upd()
+-- 		self.fra +=1
+-- 		self.flash=max(0, self.flash-1)
+-- 	end
+-- 	function e:draw()
+-- 			palt(0,false)
+-- 			palt(14,true)
+-- 			olddraw(self)
 
-			local bulpos=116-f%136
-			spr(75,bulpos,self.y-4,2,1)
-			spr(91,bulpos+16,self.y-5)
-			palt(14,true)
-			palt(0,true)
-			clip(self.x-self.pw/2+5,0,128,128)
-			olddraw(self)
-			palt()
-			pal()
-			clip()
-	end
-	return e
-end
+-- 			local bulpos=116-f%136
+-- 			spr(75,bulpos,self.y-4,2,1)
+-- 			spr(91,bulpos+16,self.y-5)
+-- 			palt(14,true)
+-- 			palt(0,true)
+-- 			clip(self.x-self.pw/2+5,0,128,128)
+-- 			olddraw(self)
+-- 			palt()
+-- 			pal()
+-- 			clip()
+-- 	end
+-- 	return e
+-- end
 
 function create_skull_e()
 	local e=create_mob(71,64,32,2,2)
 	return e
 end
 
-function create_lazer_turret_e(_x,_y,props)
-	local _ENV=create_mob(45,_x,_y,1,1)
+function create_lazer_turret_e(_x,_y,tx,ty)
+		local _ENV=create_mob(45,_x,_y,1,1)
 	hp=10
 	ang=0
 	ox=x
 	oy=y
-	tx,ty=unpack(props)
 	rot_spd=0x.01
 	countdown=60+rnd(120)\1
 	toff=rnd()*10
@@ -389,16 +390,14 @@ function lerp(v,tv,t)
 end
 
 function create_static_turret_e
-		(_x,_y,props)
+		(_x,_y,tx,ty,_ang,_countdown,_life)
 	local _ENV=create_lazer_turret_e
-		(_x,_y,props)
-	_,_,ang,countdown,life=
-		unpack(props)
+		(_x,_y,tx,ty)
+		ang,countdown,life=_ang,_countdown,_life
 		max_countdown=countdown
 	f,rot_spd=0,0
 	function move()
 		f+=1
-		printh("life:"..life.." f:"..f.."life-120:".."life")
 		if f>life then
 			remove(_ENV)
 		end
