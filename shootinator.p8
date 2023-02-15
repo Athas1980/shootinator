@@ -350,6 +350,16 @@ function _update60()
 	state.update()
 end
 
+function spawn(sp)
+	local mob = sp.func(
+		unpack(sp.params))
+	if sp.class == "en" then
+		add(enmys,mob)
+		add(mobs,mob)
+	end
+
+end
+
 function update_game()
 	f+=1
 	if not distance_blocked then
@@ -364,9 +374,11 @@ function update_game()
 	spread=max(0,spread-1)
 	rapid=max(0,rapid-1)
 	
-	if level_dat[d] then
-		level_dat[d]()
-	end
+	-- if level_dat[d] then
+	-- 	level_dat[d]()
+	-- end
+
+	foreach(spawn_tab[d],spawn)
 
 	if d>total_dist and #enmys==2 and not fenemy then 
 		fenemy=true
@@ -441,7 +453,7 @@ function input()
 			sfx(55)
 		end
 		if btn(⬆️) and str_shield then
-			_g.invun += 60
+			_g.invun += 120
 			_g.str_shield =false
 			sfx(55)
 		end
@@ -588,6 +600,23 @@ function read_kv_arr(str)
 		tbls[k]=read_assoc(v)
 	end
 	return tbls
+end
+
+--splits sequences of sequences
+--chars should contain the split
+--order
+function multisplit(str, chars)
+	--split by first char
+	local tab=split(str,chars[1])
+	for key,val in ipairs(tab) do
+		if #chars>1 then
+			--replace value with
+			--multisplit of remain chars
+			tab[key]=
+				multisplit(val,sub(chars,2))
+		end
+	end
+	return tab
 end
 
 --reads a single comma seperated

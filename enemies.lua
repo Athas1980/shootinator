@@ -1,14 +1,5 @@
 
-function create_enemy(etype,x,y,props)
-	local e=_ENV[
-	"create_"..etype.."_e"]
-	(x,y,props)
-	add(enmys,e)
-	
-	return e 
-end
-
-function create_disc_e(_spl,_dur)
+function disc(_spl,_dur)
 	local _ENV=create_mob(81)
 	
 	merge(_ENV, read_assoc("dy=1,sn=1,hp=1,escore=50"))
@@ -34,7 +25,7 @@ function create_disc_e(_spl,_dur)
 	return _ENV
 end
 
-function create_flap_e(x1,target_y,_hp)
+function flap(x1,target_y,_hp)
 
 	local e=create_mob(93,x1,-8)
 	local props=read_assoc("escore=100,dy=1,sn=1,hp=2,frict=0.98,accel=0.1")
@@ -120,7 +111,7 @@ function flip_pts_x(pts)
 	return output
 end
 
-function create_blob_e(x1,y1,ty1)
+function blob(x1,y1,ty1)
 	local _ENV=create_mob(106,x1,y1)
 	--todo extrac specific enemies
 	merge(_ENV, read_assoc(
@@ -150,7 +141,7 @@ end
 
 -- FIXME logic for this is
 -- the same as a disc
-function create_spin_e(_spl,_dur)
+function spin(_spl,_dur)
 	local _ENV=create_mob(106)
 	shot_times={60,10,10}
 	t_idx=1
@@ -192,7 +183,7 @@ function create_spin_e(_spl,_dur)
 end
 
 
-function create_green_e(x1, ty1)
+function green(x1, ty1)
 	local _ENV=create_mob(65,x1)
 	merge (_ENV, read_assoc(
 		"dy=0.5,w=1,h=1,hp=3,wait=180,wait_dec=0,sn=1,wiggle=2,escore=200"
@@ -242,7 +233,7 @@ function create_green_e(x1, ty1)
 	return _ENV
 end
 
--- function create_launcher_e()
+-- function launcher()
 -- 	local e=create_mob(131,128,64,3,2)
 -- 	e.hp=10
 -- 	olddraw=e.draw
@@ -269,12 +260,16 @@ end
 -- 	return e
 -- end
 
-function create_skull_e()
+function skull()
 	local e=create_mob(71,64,32,2,2)
 	return e
 end
 
-function create_lazer_turret_e(_x,_y,tx,ty)
+function lazer(_x,_y,tx,ty)
+	if _x==0 then _x=-8 end
+	if _y==0 then _y=-8 end
+	if _x==120 then _x=132 end
+	if _y==120 then _y=132 end
 		local _ENV=create_mob(45,_x,_y,1,1)
 	hp=10
 	ang=0
@@ -389,10 +384,11 @@ function lerp(v,tv,t)
 	return v +(tv-v)*t
 end
 
-function create_static_turret_e
+function static
 		(_x,_y,tx,ty,_ang,_countdown,_life)
-	local _ENV=create_lazer_turret_e
-		(_x,_y,tx,ty)
+		printh(_countdown)
+		printh(_life)
+	local _ENV=lazer(_x,_y,tx,ty)
 		ang,countdown,life=_ang,_countdown,_life
 		max_countdown=countdown
 	f,rot_spd=0,0
@@ -406,7 +402,6 @@ function create_static_turret_e
 			y=lerp(y,ty,easeinoutquart(f/120))
 		end
 		if f+120>life then
-			printh(((120+f-life)/120))
 			x=lerp(tx,_x,easeinoutquart((120+f-life)/120))
 			y=lerp(ty,_y,easeinoutquart((120+f-life))/120)
 		end
