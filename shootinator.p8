@@ -373,11 +373,6 @@ function update_game()
 	invun=max(0,invun-1)
 	spread=max(0,spread-1)
 	rapid=max(0,rapid-1)
-	
-	-- if level_dat[d] then
-	-- 	level_dat[d]()
-	-- end
-
 	foreach(spawn_tab[d],spawn)
 
 	if d>total_dist and #enmys==2 and not fenemy then 
