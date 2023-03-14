@@ -119,6 +119,7 @@ function read_type(type, iter, idx)
 end
 
 local dist,finished=0,false
+spawn_distances={}
 while finished==false do
 	local d,val=next(),next()
 	if d==nil or val == nil then
@@ -133,6 +134,7 @@ while finished==false do
 		add(existing,
 			read_type(type, next, val))
 		spawn_tab[dist] = existing
+		add(spawn_distances,dist)
 	end
 end
 

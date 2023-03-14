@@ -1,0 +1,70 @@
+pico-8 cartridge // http://www.pico-8.com
+version 41
+__lua__
+function _init()
+	mobs={}
+	for i=1,10 do
+		local cm=circ_mob(
+		rnd(128),rnd(128),rnd(),rnd())
+		local rm=rect_mob(
+		rnd(128),rnd(128),rnd(),rnd())
+		add(mobs,cm)
+		add(mobs,rm)
+	end
+end
+
+function _update60()
+	for m in all(mobs) do
+		m:upd()
+	end
+end
+
+function _draw()
+	cls(0)
+	for m in all(mobs) do
+		m:draw()
+	end
+end
+
+function create_mob(x1,y1,dx1,dy1)
+	local mob={
+		x=x1,
+		y=y1,
+		dx=dx1,
+		dy=dy1,
+		upd=function(self)
+			printh("upd x:"..self.x.. " y:"..self.y)
+			self.x=self.x+self.dx
+			self.y=self.y+self.dy
+			if(self.x>128 or self.x<0) self.dx=-self.dx
+			if(self.y>128 or self.y<0) self.dy=-self.dy
+		end
+	}
+	return mob
+end
+
+function circ_mob(x1,y1,dx1,dy1)
+	local mob=create_mob(x1,y1,dx1,dy1)
+	function draw(self)
+		circfill(self.x,self.y,3,11)
+	end
+	return mob
+end
+
+function rect_mob(x1,y1,dx1,dy1)
+	local mob=create_mob(x1,y1,dx1,dy1)
+	function draw(self)
+		rectfill(self.x,self.y,self.x+3,self.y+3,14)
+	end
+	return mob
+end
+
+
+
+__gfx__
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

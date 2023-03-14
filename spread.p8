@@ -1,29 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
-version 39
+version 41
 __lua__
---shootinator
---wes & bob
-
---todo
---level intros
--- game over screen / death animation
--- Add levels
--- boss
--- missile lanucher
-
--- https://discord.com/channels/398648936879095828/810921766314442772/992853422145552415
--- thanks to atticurse
-
-
--- https://discord.com/channels/215267007245975552/215268097441923075/995111340664430602
--- thanks to pancelor for the spline suggestion.
 
 function _init()
-	cartdata("squidlight_shootinator_1")
-	hi=dget(0)
-	--poke(0x5f36,0x40)
 	poke(0X5F57,0x10)
-	show_collision=true
+	show_collision=false
 	states={
 		game={
 			draw=draw_game,
@@ -114,80 +95,19 @@ function _init()
 		59,-9,41,-11]]
 
 	}
-	splines=read_splines(spl_dat)
-	shake=0
-	distance_blocked=false
-	spd=1
-	fenemy=false
-
-	mnu_hide_col()
-
-	--global tables
-	init_title()
-	#include levels.lua
-	music(0,0,3)
-	dialogs={ 
-		{[[
-yOU'LL NEVER DEFEAT US 
-IN THAT SHIP, WE
-DESIGNED.
-...]], 1},
-		{[[
-...
-iT CAN'T EVEN GO FULL 
-SPEED WHEN SHOOTING.]], 1},
-		{[[
-yOU INSULTED HUMANKIND
-fOR THAT ...
-
-... yOU wILL pAY!
-		]], 0},		
-		{[[
-i WILL SEND MY WEAKEST
-SHIPS AFTER YOU. tO
-GIVE YOU A FAIR CHANCE.
-		]], 1},
-		{[[
-yOU DO KNOW THAT WE ARE
-at war!!! rIGHT???
-
-ᶜ5-- IDIOT --ᶜ7
-		]], 0},{[[
-yOU MUS HAVE REALISED:
-tHAT SHIP CAN'T EVEN
-TURN AROUND. yOU WILL
-BE STUCK IN SPACE.
-]],1
-},{[[
-sTOP THIS INSANE FIGHT
-AND WE WILL HELP YOU 
-GET BACK TO EARTH.
-]],1},
-{[[
-...
-]],0}}
+	init_game()
 	_g=_ENV
-end
-
-function mnu_show_col()
-	menuitem(1, "hide coll", mnu_hide_col)
-	show_collision=true
-end
-
-function mnu_hide_col()
-	menuitem(1, "show coll", mnu_show_col)
-	show_collision=false
 end
 
 
 
 
 function init_game()
-	music(8,250,3)
-	level=1
-	state=states.intro
-	init_level_intro(1)
+	state=states.game
+		level=1
 	srand(33)
+	spd=1
+	shake=0
 	mobs,buls,ebuls,enmys,pparts,
 	p_ups={},{},{},{},{},{}
 	tabs={mobs,buls,
@@ -207,6 +127,9 @@ function init_game()
 	add(mobs,shield)
 	stars = create_stars()
 	score_mult=1
+	score=0
+	hi=0
+	d=0 
 
 	score_cols=split("12,12,6,6,13")
 
@@ -236,7 +159,193 @@ function update_level_intro()
 	end
 end
 
-#include player.lua
+function create_player()
+	sprs=read_kv_arr(
+		"muzx=-1,sx=86,pw=7,f1x=-2,f2x=1,coffx=1|"..
+		"muzx=-1,sx=93,pw=8,f1x=-2,f2x=2,coffx=1|"..
+		"muzx=1,sx=101,pw=11,f1x=-1,f2x=4,coffx=2|"..
+		"muzx=-1,sx=112,pw=8,f1x=-2,f2x=2,coffx=1|"..
+		"muzx=-1,sx=120,pw=7,f1x=-2,f2x=1,coffx=1"
+	)
+	local plr=create_mob(1,64,80,2,2)
+	merge(plr,
+		{mov=0,
+		stime=0,
+		can=false,
+		muzy=-12,
+		sy=0,
+		ph=12,
+		coffy=0,
+		colh=8,
+		soffx=0
+		})
+
+	function plr.upd(_ENV)
+		x = mid(4,x,123)
+		y = mid(4,y,123)
+		if stime>0 then
+			stime=stime-spd
+		end
+		if dx<0 then
+			mov-=1
+		elseif dx>0 then
+			mov+=1
+		else
+			mov-=sgn(mov)
+		end
+		
+		mov=mid(-15,mov,15)
+		--choose sprite based on speed
+		-- -15+ -> 1
+		-- - 5 -> 2
+		-- 5 -> 3
+		-- 15+ - 4
+		
+		local idx=split("1,2,2,3,3,3,4,4,5")
+		merge(_ENV, sprs[idx[mov\3+5]])
+		colw=pw-2*coffx
+		soffx=-pw/2
+
+		if lives and lives<2 then
+
+			add(pparts, 
+			create_ppart(
+				x-4+rnd(8),
+				y,
+				rnd(0.25)-.05,
+				rnd(2)+1,
+				20,
+				20,
+				rnd({5,6,9})))
+		end
+	end
+
+
+	function plr.draw(_ENV)
+		local offx=-pw/2
+		local offy=-ph/2
+		local pal, palt, sspr =_g.pal, _g.palt, _g.sspr
+		if flash>10 then
+			pal(lightenpal[2])
+			x+=(f%5-2)*2
+			y+=(f%5-2)*2
+		elseif flash>0 then
+			pal(lightenpal[1])
+		end
+		local fy=y+6
+
+		local x=x+offx
+		local y=y+offy
+		local fx1=x+f1x
+		local fx2=x+f2x
+		--flame frame
+		local ffr=_g.flr(f%16/4)
+		local fspr=dy<0 and	34 or 33
+		_g.sspr(sx, sy,	pw,	ph, x, y)
+		pal()
+
+		if ffr~=0 then
+			if ffr%2==1 then 
+				pal(7,12)
+				pal(12,13)
+				pal(13,1)
+				palt(1,true)
+			end 
+			if rnd()>0.3 then
+				spr(fspr,fx1,fy)
+			end
+			if rnd()>0.3 then
+				spr(fspr,fx2,fy,1,1,true)
+			end
+			pal()
+			palt()
+		end
+		draw_collision(_ENV)
+	end
+	return plr
+end
+
+function create_shield()
+	local sh=create_mob(1,50,100,2,2)
+	sh.pw,sh.ph=17,17
+	function sh:upd()
+		self.x,self.y=p.x,p.y
+	end
+	function sh:draw()
+		local x,y=self.x-6,self.y-5
+		if invun>0 then
+			if invun<40 and (invun/2)%2==0 then
+				return
+			end
+			pal_idx=(f\3)%(#shield_darken_pal)+1
+			spal = shield_darken_pal[pal_idx]
+			for i,v in pairs(spal) do
+				if v==0 then 
+					palt(i, true)
+				end
+			end
+			pal(spal)
+			sspr(24,0,10,10,x-4,y-4)
+			sspr(24,0,10,10,x+5,y-4,10,10,true,false)
+			sspr(24,0,10,10,x-4,y+5,10,10,false,true)
+			sspr(24,0,10,10,x+5,y+5,10,10,true,true)
+			pal()
+			palt()
+		else --debug
+			--invun = 20
+		end
+		if invun>0 then 
+			draw_collision(self)
+		end
+	end
+	return sh
+end
+
+function create_powerup(_typ, _x,_y)
+	pu=create_mob(_typ+55,_x,_y)
+	pu.typ=_typ
+	merge(pu, read_assoc(
+		"pd=12,ph=10,dy=0.25,life=240")
+	)
+	printh("Powerup")
+	printh(pu)
+	
+	function pu.draw(_ENV)
+		if (life<60 and (f/2)%2 == 0)
+			or (life<30 and (f/3)%2 >0)
+		then
+			return
+		end
+		if (f\5)%4 == 1 or (f\5)%4 == 3 then
+			pal(lightenpal[1])
+		end
+		if (f\5)%4 == 2 then
+			pal(lightenpal[2])
+		end
+
+		spr(60,x-8,y-8,1,1,false,false)
+		spr(60,x,y-8,1,1,true,false)
+		spr(60,x-8,y,1,1,false,true)
+		spr(60,x,y,1,1,true,true)
+		pal()
+		spr(s,x-4,y-4)
+		draw_collision(_ENV)
+	end
+
+	function pu.upd(_ENV)
+		life-=1
+		if x >128 or y>160
+		or x<-8 or y<-8
+		or life<0 then
+			remove(_ENV)
+		end
+	end
+	add(p_ups, pu)
+	add(mobs, pu)
+
+end
+
+
 
 function draw_collision(e)
 	if not show_collision and 
@@ -247,7 +356,99 @@ function draw_collision(e)
 	rect(x,y,w,h,11)
 end
 
-#include mob.lua
+-- upd
+-- move
+-- draw
+-- col
+function create_mob(s,x,y,w,h)
+	local dx,dy,w,h=0,0,w or 1,h or 1
+
+	local mob={
+		s=s,
+		x=x or 64,
+		y=y or -8,
+		w=w,
+		h=h,
+		pw=w*8,
+		ph=h*8,
+		dx=dx,
+		dy=dy,
+		upd=function() end,
+		move=def_move,
+		draw=def_draw,
+		col=def_col,
+		hurt=def_hurt,
+		die=def_die,
+	}
+	merge(mob,read_assoc("hp=1,escore=100,fra=0,coffx=0,coffy=0,flash=0"))
+	setmetatable(mob,{__index=_ENV,
+	__tostring= function(self)
+		local str=""
+		for k,v in pairs(self) do
+			if str ~="" then 
+				str..="\n"
+			end
+			str..=k..":"..tostr(v)
+		end
+		return str
+	end
+})
+	return mob
+end
+
+function def_move(_ENV)
+		x+=dx*spd
+		y+=dy*spd
+end
+
+function def_draw(_ENV)
+		if flash>0 then
+			pal(lightenpal[1])
+		end
+		if flash>2 then
+			pal(lightenpal[2])
+		end
+		spr(s,x-pw/2,y-ph/2,w,h)
+			pal()
+		draw_collision(_ENV)
+end
+
+function def_col(_ENV)
+		local col_width=colw or pw-1
+		local col_height=colh or ph-1
+		local coffx=coffx or 0
+		local coffy=coffy or 0
+		local l,t=x+coffx-col_width/2,y+coffy-col_height/2
+		return {
+			l,
+			t,
+			l+col_width,
+			t+col_height}
+end
+
+function def_hurt(_ENV, pow)
+
+				flash=5
+				hp-=pow
+				if hp <= 0 then
+					_g.kills+=1
+					die(_ENV)
+				else 
+					sfx(61)
+					add_score(1)
+				end 
+end
+
+function def_die(_ENV)
+	mob_to_ppart(_ENV)
+	remove(_ENV)
+	float(escore, x, y-10, 13)
+	add_score(escore)
+	sfx(60)
+end
+
+
+
 
 function create_pbul(_x,_y,dx)
 	dx=dx or 0
@@ -373,19 +574,8 @@ function update_game()
 	invun=max(0,invun-1)
 	spread=max(0,spread-1)
 	rapid=max(0,rapid-1)
-	foreach(spawn_tab[d],spawn)
 
-	if d>total_dist and #enmys==2 and not fenemy then 
-		fenemy=true
-	end
 
-	if d>=total_dist and #enmys==0 then
-		spd=0.25
-		if #pparts == 0 then init_win() end
-	end
-		
-			
-		
 	input()
 	for m in all(mobs) do
 		m:upd()
@@ -488,8 +678,6 @@ function draw_game()
 	clip()
 	--spr(85,125,20,1,2)
 	rect(unpack(split("125,50,127,127,1")))
-	d=min(d,total_dist)
-	line(126,126,126,126-(75*(d/total_dist)),11)
 	draw_mobs()
 	
 	for i=1,5 do
@@ -569,7 +757,161 @@ end
 -->8
 --tools
 
-#include utils.lua
+--merges associative tables
+function merge(t1,t2)
+	for k,v in pairs(t2) do
+		t1[k]=v
+	end
+	return t1
+end
+
+--reads multiple assoc tables
+function read_kv_arr(str)
+	local tbls=split(str,"|")
+	for k,v in pairs(tbls) do
+		tbls[k]=read_assoc(v)
+	end
+	return tbls
+end
+
+--splits sequences of sequences
+--chars should contain the split
+--order
+function multisplit(str, chars)
+	--split by first char
+	local tab=split(str,chars[1])
+	for key,val in ipairs(tab) do
+		if #chars>1 then
+			--replace value with
+			--multisplit of remain chars
+			tab[key]=
+				multisplit(val,sub(chars,2))
+		end
+	end
+	return tab
+end
+
+--reads a single comma seperated
+--key-value string
+function read_assoc(str)
+		local tab={}
+		local kvs=split(str,",")
+		for kv in all(kvs) do
+			local k,v=unpack(
+				split(kv,"="))
+			tab[k]=v
+		end
+	return tab
+end
+
+--redefine sgn so sgn(0)=0
+function sgn(n)
+	if n==0 then
+		return 0
+	end
+	return n/abs(n)
+end
+
+--distance vunerable to overflow
+function pdist(p1,p2) 
+	return ((p2.x-p1.x)^2+(p2.y-p1.y)^2)^0.5
+end
+
+--cubic bezier single dimension
+function cub_b_p(a,b,c,d,t)
+	local tm=1-t
+	return tm*tm*tm*a+
+		tm*tm*3*t*b+
+		tm*3*t*t*c+
+		t*t*t*d
+end
+
+--cubic bezier x&y
+function cub_bez(p1,p2,p3,p4,t)
+	return {x=cub_b_p(p1.x,
+	p2.x,
+	p3.x,
+	p4.x,
+	t),
+	y=cub_b_p(p1.y,
+	p2.y,
+	p3.y,
+	p4.y,
+	t)}
+end
+
+
+
+function read_splines(spl_dat)
+	local splines={}
+	for i=1,#spl_dat do
+		add(splines, read_spline(spl_dat[i]))
+		add(splines, read_spline(flip_pts_x(spl_dat[i])))
+	end
+	return splines
+end
+--read splines
+--expected table with multiple
+--of 8 entries.
+--p1.x,p1.y
+function read_spline(points)
+	local curves,dists,td={},{},0
+	local limits={0}
+	for i=1,#points,8 do
+		local pts={}
+		for j=i,i+8,2 do
+			add(pts, {
+			x=points[j],
+			y=points[j+1]})
+		end
+		local function c(t)
+			return cub_bez(
+				pts[1],
+				pts[2],
+				pts[3],
+				pts[4],
+				t)
+		end
+		local d=0
+		for j=0x0.1,1,0x0.1 do
+			d+=pdist(c(j-0x0.1),c(j))
+		end
+		add(curves,c)
+		add(dists,d)
+		td+=d
+	end
+	
+	local l=0
+	for d in all(dists) do
+		l+=d/td
+		add(limits,l)
+	end
+
+	limits[#limits]=1
+	
+	local function spl(t)
+		if t==1 then
+			return {x=0,y=0}
+		end
+
+		local i,l=1,0
+		while t>=l do
+			i+=1
+			l=limits[i]
+			if l == nil then
+				break
+			end
+		end
+		local ol=limits[i-1]
+		local fact=1/(l-ol)
+		local t2=(t-ol)*fact
+		return curves[i-1](t2)
+	end
+	--return curves
+	return spl
+end
+
+
 
 -- removes a obj from all of the
 -- main tables
@@ -750,7 +1092,568 @@ end
 
 -->8
 --enemies
-#include enemies.lua
+
+function disc(_spl,_dur)
+	local _ENV=create_mob(81)
+	
+	merge(_ENV, read_assoc("dy=1,sn=1,hp=1,escore=50"))
+	sprs=split("81,82,83,84")
+	spl=splines[_spl]
+	dur=_dur
+	function upd(_ENV)
+		fra +=1
+		flash=max(0, flash-1)
+		if fra%5==0 then
+			sn=sn%4+1
+			s=sprs[sn]
+		end
+		if (fra/dur == 1) then 
+			remove(_ENV)
+		end
+	end
+	function move(_ENV)
+
+		merge(_ENV,spl(fra/dur))
+	end
+
+	return _ENV
+end
+
+function flap(x1,target_y,_hp)
+
+	local e=create_mob(93,x1,-8)
+	local props=read_assoc("escore=100,dy=1,sn=1,hp=2,frict=0.98,accel=0.1")
+
+	
+	merge(e,props)
+	
+	local _ENV = e
+	e.hp = _hp
+	e.escore = 100*_hp 
+	sprs=split("93,94,95,94")
+	fsprs=split("77,78,79")
+	targety=target_y or 32
+	pp = 30+rnd(60)
+	
+	function e.upd(_ENV)
+		if y>targety then
+			dy=0
+		end
+
+		dx+=(p.x+p.pw/2-x)/pp*accel
+
+		for i=1,3 do
+			for alt in all(enmys) do
+				if alt == self then
+					break
+				end
+				if collided(create_mob(0,x-i*8, y),alt) then
+				 	dx+=(3-i)*(accel/2)
+				end
+				if collided(create_mob(0,x+i*8,y),alt) then
+					dx-=(3-i)*(accel/2)
+				end
+			end
+		end
+
+		dx*=frict
+		flash=max(0, flash-1)
+		fra +=1
+		if fra%3==0 then
+			fs=rnd(fsprs)
+		end
+		if fra%7==0 then
+			sn=sn%4+1
+			s=sprs[sn]
+		end
+		if y>130 then
+			remove(_ENV)
+		end
+		x=mid(4,120,x)
+		--fixme remove randomness
+		if rnd()<1/180 then
+			create_lazer_ebul(_ENV)
+		end
+	end
+	
+	function e.draw(_ENV)
+		local ox=x-pw/2
+		local oy=y-ph/2
+		spr(fs,ox,oy-8)
+		if e.flash>0 then
+			pal(lightenpal[1])
+		end
+		if e.flash>2 then
+			pal(lightenpal[2])
+		end
+		
+		spr(s,ox,oy)
+		pal()
+		draw_collision(_ENV)
+	end
+	return e
+end
+--- flips all the x points
+-- @param pts The points to mirror
+-- @return a table with flipped string
+function flip_pts_x(pts)
+	local output={}
+	for i=1,#pts,2 do
+		add(output,128-pts[i])
+		add(output,pts[i+1])
+	end
+	return output
+end
+
+function blob(x1,y1,ty1)
+	local _ENV=create_mob(106,x1,y1)
+	--todo extrac specific enemies
+	merge(_ENV, read_assoc(
+		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
+	))
+	sprs=split("106,108,110")
+	ty=ty1
+	function upd(_ENV)
+		fra +=1
+		flash=max(0, flash-1)
+		if fra%8==0 then
+			sn=sn%3+1
+			s=sprs[sn]
+		end
+		dx=cos(fra/64)
+		if y<ty then
+			dy=1
+		else dy=sin(fra/32) end
+
+		if rnd()<1/180 then
+			spinshot(_ENV)
+		end
+
+	end
+	return _ENV
+end
+
+-- FIXME logic for this is
+-- the same as a disc
+function spin(_spl,_dur)
+	local _ENV=create_mob(106)
+	shot_times={60,10,10}
+	t_idx=1
+	local shot_time=shot_times[1]
+	
+	merge(_ENV, read_assoc(
+		"w=2,h=2,dy=1,sn=1,hp=10,pw=16,ph=16"
+	))
+	sprs=split("96,98,100,102")
+	spl,dur=splines[_spl],_dur
+	
+	function upd(_ENV)
+		shot_time-=1
+		if shot_time<0 then 
+			--shoot
+			shot_time=shot_times[t_idx]
+			t_idx=(t_idx + 1)%#shot_times +1
+			create_aim_ebul(_ENV)
+		end
+		fra +=1
+		flash=max(0, flash-1)
+		if fra%4==0 then
+			sn=sn%4+1
+			s=sprs[sn]
+		end
+		if (fra/dur == 1) then 
+			remove(_ENV)
+		end
+
+
+
+	end
+
+	function move(_ENV)
+		merge(_ENV,spl(fra/dur))
+	end
+
+	return _ENV
+end
+
+
+function green(x1, ty1)
+	local _ENV=create_mob(65,x1)
+	merge (_ENV, read_assoc(
+		"dy=0.5,w=1,h=1,hp=3,wait=180,wait_dec=0,sn=1,wiggle=2,escore=200"
+	))
+	ty=ty1
+	ix=x
+	sprs={65,66}
+	fra=rnd(180)\1
+	foff=rnd(30)\1
+	function upd(_ENV)
+		
+		fra +=1
+		
+		flash=max(0, flash-1)
+		if fra%11==0 then
+			sn=sn%2+1
+			s=sprs[sn]
+		end
+		x=sin((f+foff)/30)*wiggle+ix
+		wait-=wait_dec
+
+		if y>=ty and wait_dec==0 then
+			dy=0
+			wiggle=3
+			wait_dec = 1
+		end
+		if wait <45 then
+			wiggle=1.2
+		end
+		if wait <30 then
+			wiggle = 0
+		end
+		if wait<0 then
+			dy=1.5
+			wiggle=1.2
+		end
+
+		if fra%180 ==1 then
+			create_lazer_ebul(_ENV)
+		end
+		if y>130 then
+			remove(_ENV)
+		end
+	end
+
+
+	return _ENV
+end
+
+-- function launcher()
+-- 	local e=create_mob(131,128,64,3,2)
+-- 	e.hp=10
+-- 	olddraw=e.draw
+-- 	function e:upd()
+-- 		self.fra +=1
+-- 		self.flash=max(0, self.flash-1)
+-- 	end
+-- 	function e:draw()
+-- 			palt(0,false)
+-- 			palt(14,true)
+-- 			olddraw(self)
+
+-- 			local bulpos=116-f%136
+-- 			spr(75,bulpos,self.y-4,2,1)
+-- 			spr(91,bulpos+16,self.y-5)
+-- 			palt(14,true)
+-- 			palt(0,true)
+-- 			clip(self.x-self.pw/2+5,0,128,128)
+-- 			olddraw(self)
+-- 			palt()
+-- 			pal()
+-- 			clip()
+-- 	end
+-- 	return e
+-- end
+
+function skull()
+	local e=create_mob(71,64,32,2,2)
+	return e
+end
+
+function lazer(_x,_y,tx,ty)
+	if _x==0 then _x=-8 end
+	if _y==0 then _y=-8 end
+	if _x==120 then _x=132 end
+	if _y==120 then _y=132 end
+		local _ENV=create_mob(45,_x,_y,1,1)
+	hp=10
+	ang=0
+	ox=x
+	oy=y
+	rot_spd=0x.01
+	countdown=60+rnd(120)\1
+	toff=rnd()*10
+	olddraw=draw
+	prefiring=false
+	firing=false
+	max_countdown=120
+
+	function move()
+		local dir = atan2(tx-ox,ty-oy)
+		ox,oy=ox+cos(dir)*.5,oy+sin(dir)*.5
+		x,y=ox+8*cos(toff+t()/2),oy+8*sin(toff+t()/4) 
+	end
+	function upd(_ENV)
+		flash=max(0, flash-1)
+		local player_ang =
+			atan2(p.x-x,p.y-y)
+		local ang_diff=player_ang-ang
+		if abs(ang_diff)>0.5 then
+			ang_diff=-ang_diff
+		end
+		ang+=rot_spd*sgn(ang_diff)
+		ang%=1
+		
+		countdown=(countdown-1)%max_countdown
+		prefiring= countdown<60
+		if countdown==60 then
+			sfx(54)
+		end
+		if countdown<30 then
+			prefiring=false
+			firing=true
+		else firing =false
+		end
+	end
+
+	function draw(_ENV)
+
+		if flash>0 then
+			pal(lightenpal[1])
+		end
+		if flash>2 then
+			pal(lightenpal[2])
+		end
+
+		local ca,sa= cos(ang), sin(ang)
+		local xoff,yoff= ca*200, sa*200
+		if (prefiring) then
+			--rectfill(0,0,128,128,1)
+			
+			fillp(abs(xoff)>abs(yoff) and ▥ or ▤)
+			if (countdown<40) fillp()
+			line(x,y,x+xoff, y+yoff,countdown<45 and 8 or 2 )
+			fillp()
+		end
+
+		if (firing) then
+			local cx,cy=0,0
+			if abs(xoff)>abs(yoff) then
+				cy=1
+			else
+				cx=1
+			end
+
+			local c=9
+			line(x,y,x,y,0)
+			
+			for i=0, 200 do
+				local v=(i/10 - t()*7)%1
+				local partx,party= i, cos(v)*4
+				partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
+				line(partx,party, 2)
+			end
+
+			line(x-cx,y-cy,x-cx+xoff,y-cy+yoff,14)
+			line(x+cx,y+cy,x+cx+xoff,y+cy+yoff,14)
+			line(x,y, x+xoff,y+yoff,7)
+			if line_rect_isect(
+				x,y,x+xoff,y+yoff,
+				unpack(p:col())) then
+					hurt_player()
+			end
+
+			for i=0, 128, 0.5 do
+				local v=(i/10 - t()*7)%1
+				local c=9
+				if (v>0.45) then
+					local partx,party= i, cos(v)*4
+					partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
+					pset(partx, party, 8)
+				end
+			end
+		end
+		
+		circfill(x+cos(ang)*4, y+sin(ang)*4,3,1)
+		sspr(104,16,11,11,x-5,y-5)
+		pal()
+
+
+		draw_collision(_ENV)
+	end
+
+	return _ENV
+end
+
+function lerp(v,tv,t)
+	return v +(tv-v)*t
+end
+
+function static
+		(_x,_y,tx,ty,_ang,_countdown,_life)
+		printh(_countdown)
+		printh(_life)
+	local _ENV=lazer(_x,_y,tx,ty)
+		ang,countdown,life=_ang,_countdown,_life
+		max_countdown=countdown
+	f,rot_spd=0,0
+	function move()
+		f+=1
+		if f>life then
+			remove(_ENV)
+		end
+		if f<120 then
+			x=lerp(x,tx,easeinoutquart(f/120))
+			y=lerp(y,ty,easeinoutquart(f/120))
+		end
+		if f+120>life then
+			x=lerp(tx,_x,easeinoutquart((120+f-life)/120))
+			y=lerp(ty,_y,easeinoutquart((120+f-life))/120)
+		end
+	end
+
+	olddraw = draw
+	function draw()
+		olddraw(_ENV)
+		print(tostr(ang*16,true)[6], x,y,7)
+	end
+	return _ENV
+end
+
+function create_lazer_ebul(e)
+	sfx(58,3)
+	local _ENV=create_mob(86,e.x,e.y+8)
+	f=-5;
+	e.flash=20;
+	function upd(_ENV)
+		f+=1
+		if (f>0) then
+				dy=max(f/60,1.5)
+		else 
+			x=e.x
+		end
+		if y>130 then
+			remove(_ENV)
+		end
+	end
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
+end
+
+function create_aim_ebul(e)
+	sfx(58,3)
+	local _ENV=create_mob(64,e.x,e.y+8)
+	colw=2
+	colh=2
+	sprs = {64,80}
+	f=-5;
+	e.flash=5;
+	sn=0
+	
+	local ang = atan2(p.x-e.x, p.y-e.y)
+	dx,dy=cos(ang)*1.5,sin(ang)*1.5
+	function upd(_ENV)
+		f+=1
+
+		fra+=1
+		if fra%5==0 then
+			sn=sn%2+1
+			s=sprs[sn]
+		end
+
+		-- sp=fra
+		-- FIXME need a more
+		-- omprehensive out of bounds
+		if y>130 then
+			remove(_ENV)
+		end
+	end
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
+end
+
+function spinshot(mob)
+	sfx(57)
+	local spd=1
+	local _ENV=create_mob(0,mob.x,mob.y)
+	merge(_ENV, read_assoc(
+		"dx=0,dy=0,rot=0,dir=0.75,turn=0.0025"
+	))
+	x=mob.x
+	y=mob.y
+	lock=false
+	speed=spd
+	move=def_move
+
+	if abs(p.x-mob.x) >= abs(p.y-mob.y) then
+		if p.x-mob.x>0 then
+			dir=0
+			dx=spd
+		else
+			dir=0.5
+			dx=-spd
+		end
+	else 
+		if p.y-mob.y>0 then
+			dir=0.75
+			dy=spd
+		else
+			dir=0.25
+			dy=-spd
+		end
+	end
+
+	function draw(_ENV)
+		--0x0.5555
+		--0x0.aaaa
+		
+		for i=1,3 do
+			local x1=x+cos(rot)*3
+			local y1=y+sin(rot)*3
+			circ(x1,y1,1,3)
+			pset(x1,y1,11)
+			rot+=0x0.5555
+			if lock then 
+				pset(x, y, 8)
+			end
+			draw_collision(_ENV)
+		end
+	end
+	function upd(_ENV)
+		rot=(rot+0x0.05)%1
+		player_ang =
+			atan2(p.x-x,p.y-y)
+		local ang_diff=player_ang-dir
+		if abs(ang_diff)%1<0.166 then
+			lock=true
+			dir+=turn*sgn(ang_diff)
+			dx=cos(dir)*speed
+			dy=sin(dir)*speed
+		else
+			lock = false
+		end
+		dir%=1
+		if x>130 or y>130
+		 or x<-8 or y<-8 then
+			remove(_ENV)
+		end
+	end
+	function move(_ENV)
+		x+=dx
+		y+=dy
+	end
+	function col()
+		return {x-4,y-4,x+4,y+5}
+	end
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
+end
+
+function line_rect_isect(x0, y0, x1, y1, l, t, r, b)
+ local xm,ym=x1-x0,y1-y0
+ local tl, tr, tt, tb =
+  (l - x0) / xm,
+  (r - x0) / xm,
+  (t - y0) / ym,
+  (b - y0) / ym
+ return max(0, max(min(tl, tr), min(tt, tb))) <
+        min(1, min(max(tl, tr), max(tt, tb)))
+end
+
+--[sfx]0100004927492f4927492f492b4927492f6e186c166916661262165f145d125a165716541251144001400140014001400140014001400140014001400140014001400104050000[/sfx]
+--[sfx]01000049274a2f4b274b2f4c2b4e27502f7b1874166d1666125f165a14561252164d16491246144001400140014001400140014001400140014001400140014001400104050000[/sfx]
+
+
+
 
 
 
@@ -958,7 +1861,45 @@ end
 -->8
 --ui/dialog
 
-#include textbox.lua
+function textbox(t, speaker)
+
+	-- local x=x or 2
+	-- local y=y or 96
+	-- local w=w or 124
+	-- local h=h or 30
+	-- local r=x+w-1
+	-- local b=y+h-1
+	
+	-- rectfill(x,y,r,b,0)
+	-- line(x+2,y,r-2,y,7)
+	-- line(r,y+2)
+	-- line(r,b-2)
+	-- line(r-2,b)
+	-- line(x+2,b)
+	-- line(x,b-2)
+	-- line(x,y+2)
+	-- line(x+2,y)
+	
+	rectfill(2,96,125,125,0)
+	line(2+2,96,123,96,7)
+	line(125,98)
+	line(125,123)
+	line(123,125)
+	line(4,125)
+	line(2,123)
+	line(2,98)
+	line(4,96)
+	
+	local sprx=5+speaker*94
+	local sp=136+speaker*3
+	local tx=speaker ==0 and 32 or 5
+
+	spr(sp, sprx,99,3,3)
+	print(t, tx,99)
+	print("\#0❎",110,123)
+end
+
+
 
 function init_win()
 	music(-1,1000)

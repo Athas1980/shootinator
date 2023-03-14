@@ -1,11 +1,12 @@
 pico-8 cartridge // http://www.pico-8.com
-version 36
+version 41
 __lua__
 function _init()
 	x=10
 	y=64
 	r=118
 	cr=3
+	inner_cr=1
 	f=false
 	b=126
 end
