@@ -1,9 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
-version 39
+version 41
 __lua__
 
 function _init()
 	poke(0x5f36,1)
+	poke(0x5f2d, 1)
 	cls(0)
 
 	--gets rid of annoying errors
@@ -43,23 +44,55 @@ end
 
 function _draw()
 
+	local mx=mid(0,stat(32),256)
+	local my=mid(0,stat(33),256)
+
+
 	_map_display(tl)
-	cls(1)
+	cls(tl+1)
 	for i=0,127,8 do
 		print(sub(tostr(min_scroll+256-i, true),3,6), 0,i,7)
 		rectfill(32,0,127,127,0)
 	end
+	_map_display(tr)
+	cls(tr+1)
+	rectfill(0,0,32,127,0)
 
 	_map_display(bl)
-	cls(3)
+	cls(bl+1)
 	-- camera(-60,min_scroll+128)
 	for i=0,127,8 do
 		-- print(i, -60,-i,7)
 		print(sub(tostr(min_scroll+128-i, true),3,6), 0,i,7)
 		rectfill(32,0,127,127,0)
 	end
+	_map_display(br)
+	cls(br+1)
+	rectfill(0,0,32,127,0)
+	print(stat(32),0,0,7)
+	print(stat(33),0,10,7)
+	draw_cursor(mx,my)
 
 
+end
+
+function draw_cursor(x,y)
+	_map_display(tl)
+	pset(x,y,7)
+	pset(x+1,y,7)
+	pset(x,y+1,7)
+	_map_display(tr)
+	pset(x-128,y,7)
+	pset(x-127,y,7)
+	pset(x-128,y+1,7)
+	_map_display(bl)
+	pset(x,y-128,7)
+	pset(x+1,y-128,7)
+	pset(x,y-127,7)
+	_map_display(br)
+	pset(x-128,y-128,7)
+	pset(x-127,y-128,7)
+	pset(x-128,y-127,7)
 
 end
 

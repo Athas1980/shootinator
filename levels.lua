@@ -12,9 +12,9 @@ end
 
 local distance_spawn={}
 spawn_tab={}
-local next=level_iter(l1st,
- l1end)
--- local next=level_iter(l1end+3,l2end)
+-- local next=level_iter(l1st,
+--  l1end)
+local next=level_iter(l1end+3,l2end)
 
 function nybles(byte)
 		return (byte&0xf0)>>>4,
@@ -37,8 +37,8 @@ en,lazer,x:nib*8,y:nib*8,tx:nib*8,ty:nib*8
 en,spin,num:byte,dur:byte*4
 ]],"\n,")
 
-local next=level_iter(l1st,
- l1end)
+-- local next=level_iter(l1st,
+--  l1end)
 
 function read_type(type, iter, idx)
 	if type[1]=="noop" then

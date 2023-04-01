@@ -1962,6 +1962,7 @@ function mpget(x,y)
 end
 
 function init_over()
+	spd=0.1
 	music(21)
 	hi=max(hi,score)
 	dset(hi)
@@ -1980,6 +1981,8 @@ end
 
 function update_over()
 	over_f+=1
+	printh("UPDATING GAME FROM sOVER.s.")
+	update_game()
 	if btn(❎) or btn(🅾️) then
 		if (over_f>60) init_game()
 	end

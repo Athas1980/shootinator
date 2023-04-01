@@ -386,8 +386,6 @@ end
 
 function static
 		(_x,_y,tx,ty,_ang,_countdown,_life)
-		printh(_countdown)
-		printh(_life)
 	local _ENV=lazer(_x,_y,tx,ty)
 		ang,countdown,life=_ang,_countdown,_life
 		max_countdown=countdown
@@ -407,11 +405,11 @@ function static
 		end
 	end
 
-	olddraw = draw
-	function draw()
-		olddraw(_ENV)
-		print(tostr(ang*16,true)[6], x,y,7)
-	end
+	-- olddraw = draw
+	-- function draw()
+	-- 	olddraw(_ENV)
+	-- 	print(tostr(ang*16,true)[6], x,y,7)
+	-- end
 	return _ENV
 end
 
@@ -422,6 +420,7 @@ function create_lazer_ebul(e)
 	e.flash=20;
 	function upd(_ENV)
 		f+=1
+		flash=(f%21)\7
 		if (f>0) then
 				dy=max(f/60,1.5)
 		else 
@@ -472,7 +471,7 @@ function spinshot(mob)
 	local spd=1
 	local _ENV=create_mob(0,mob.x,mob.y)
 	merge(_ENV, read_assoc(
-		"dx=0,dy=0,rot=0,dir=0.75,turn=0.0025"
+		"dx=0,dy=0,rot=0,dir=0.75,turn=0.0035"
 	))
 	x=mob.x
 	y=mob.y
@@ -519,7 +518,12 @@ function spinshot(mob)
 		player_ang =
 			atan2(p.x-x,p.y-y)
 		local ang_diff=player_ang-dir
-		if abs(ang_diff)%1<0.166 then
+		
+		if abs(ang_diff)>0.5 then
+			ang_diff=-ang_diff
+		end
+		local abs_diff= abs(ang_diff)%1
+		if abs_diff<0.166 or abs_diff>0.834 then
 			lock=true
 			dir+=turn*sgn(ang_diff)
 			dx=cos(dir)*speed
