@@ -89,8 +89,8 @@ function _init()
 	
 	splines=read_splines(spl_dat)
 	--load sprite sheet music etc
-	reload(0,0,0x42ff,"shootinator.p8")
-	cstore(0,0,0x42ff)
+	-- reload(0,0,0x42ff,"shootinator.p8")
+	-- cstore(0,0,0x42ff)
 
 
 	--#include levels.lua
@@ -258,72 +258,51 @@ function init_scene(number)
 		end
 	end
 
+	function unpack_split(arg)
+		return unpack(split(arg))
+	end
 	function empty() end
-	local function box_brain()
+	--3363
+	--3282
+	--3278
+	local function box_brain2()
 		local box=create_mob(0,136,64)
 		box.draw=empty
-		local l1=static(136,136,64,64,0.5,0,10)
-		local l2=static(-8,136,64,64,0.25,0,10)
-		local l3=static(-8,-8,64,64,0.0,0,10)
-		local l4=static(136,-8,64,64,0.75,0,10)
-		local fs=0
-		add_enemy(l1)
-		add_enemy(l2)
-		add_enemy(l3)
-		add_enemy(l4)
-		l1.move=empty
-		l2.move=empty
-		l3.move=empty
-		l4.move=empty
-		local lzs={l1,l2,l3,l4}
+		local lazers={}
+		for i=1,4 do
+			local lazer = static(unpack_split("136,136,64,64,0.5,0,3"))
+			lazer.move=empty
+			lazer.hp=3
+			add_enemy(lazer)
+			add(lazers, lazer)
+		end
+		local fs,ang,dist,x,y,loff=unpack_split("0,0,102,64,64,0.625")
 		function box.upd()
 			fs+=1
-			if fs<40 then 
-				l1.x-=0.5
-				l1.y-=0.5
-				l2.x+=0.5
-				l2.y-=0.5
-				l3.x+=0.5
-				l3.y+=0.5
-				l4.x-=0.5
-				l4.y+=0.5
+			if fs<60 then
+				dist-=0.71
 			end
-			if fs<200 then
-				l1.ang-=0x0.001
-				l2.ang-=0x0.001
-				l3.ang-=0x0.001
-				l4.ang-=0x0.001
+			if fs>200 and fs<230 then 
+				x+=1
+			end
+			if fs<200 then 
+				loff-=0x0.001
+			end
+			for i=1, #lazers do 
+				local lazer = lazers[i]
+				local lang = ang+.125+i*0.25
+				lazer.x,lazer.y=x+cos(lang)*dist,y+sin(lang)*dist
+				-- lazer.y = y+sin(lang)*dist
+				lazer.ang= lang+loff+sin(t()*1.5)/100
 			end
 
-			if fs>200 and fs<230 then 
-				for l in all(lzs) do
-					l.x+=1
-					l.ang-=0x0.001
-				end
+			if fs>60 then 
+				ang=ang-0x.01
 			end
-			if fs>230 and fs<260 then 
-				for l in all(lzs) do
-					l.x-=1
-					l.ang-=0x0.001
-				end
-			end
-			if fs>260 and fs<290 then 
-				for l in all(lzs) do
-					l.y-=1
-					l.x+=0.25
-				end
-			end
-			if fs>290 and fs<320 then 
-				for l in all(lzs) do
-					l.y+=1
-					l.x-=0.25
-				end
-			end
-			for l in all(lzs) do
-				l.ang+=sin(t())/2000
-			end
-				
+
 		end
+
+
 		return box
 	end
 
@@ -331,7 +310,7 @@ function init_scene(number)
 		msg="11 Box "
 		f=0
 
-		add(mobs,box_brain())
+		add(mobs,box_brain2())
 
 	end
 

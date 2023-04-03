@@ -908,10 +908,7 @@ function float(txt,x,y,col)
 			return life>0
 		end,
 		draw = function ()
-			print(txt, left-1,y,0)
-			print(txt, left+1,y,0)
-			print(txt, left,y-1,0)
-			print(txt, left,y+1,0)
+			text_outline(txt,left,y)
 			print(txt, left,y,col)
 		end
 	})
@@ -1008,12 +1005,16 @@ function draw_win()
 	for i=1,#results do
 		-- print(results[i], max(128*i-over_f*8,24), 20+i*6, 7 )
 		local x,y=max(128*i-over_f*8,24), 20+i*6
-		for j=0,8 do
-			local ox=j%3-1
-			local oy=j\3-1
-			print(results[i],x+ox,y+oy,0)
-		end
+		text_outline(results[i],x,y)
 		stripe(results[i], x, y,split("7,7,6,13,5"))
+	end
+end
+
+function text_outline(txt,x,y)
+	for j=0,8 do
+		local ox=j%3-1
+		local oy=j\3-1
+		print(txt,x+ox,y+oy,0)
 	end
 end
 
@@ -1029,7 +1030,7 @@ function init_over()
 	spd=0.2
 	hi=max(hi,score)
 	
-	dset(hi)
+	dset(0,hi)
 	state=states.game_over
 	f=-1
 
