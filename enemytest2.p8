@@ -1,69 +1,43 @@
 pico-8 cartridge // http://www.pico-8.com
 version 41
 __lua__
---shootinator
---wes & bob
-
---todo
---level intros
--- game over screen / death animation
--- Add levels
--- boss
--- missile lanucher
-
--- https://discord.com/channels/398648936879095828/810921766314442772/992853422145552415
--- thanks to atticurse
+--enemy tester
+--wes
 
 
--- https://discord.com/channels/215267007245975552/215268097441923075/995111340664430602
--- thanks to pancelor for the spline suggestion.
+-- printh = function() print(nil/nil) end
 
 function _init()
-	cartdata("squidlight_shootinator_1")
-	hi=dget(0)
-	--poke(0x5f36,0x40)
-	poke(0X5F57,0x10)
-	show_collision=true
+	show_collision=false
 	states={
 		game={
 			draw=draw_game,
 			update=update_game
 		},
-		intro={
-			draw=draw_level_intro,
-			update=update_level_intro
-		},
 		title={
 			draw=draw_title,
 			update=update_title
-		},
-		game_over={
-			draw=draw_over,
-			update=update_over
-		},
-		win={
-			draw=draw_win,
-			update=update_win}
+		}
 	}
-	lightenpal=read_kv_arr[[
-	0=0,1=13,2=8,3=1,4=9,5=13,
-	6=7,7=7,8=14,9=10,10=7,
-	11=7,12=6,13=6,14=15,15=7|
-	0=0,1=12,2=14,3=7,4=10,5=7,
-	6=7,7=7,8=7,9=7,10=7,11=7,
-	12=7,13=7,14=7,15=7]]
-
-	shield_darken_pal=read_kv_arr[[
-		6=6,7=7,12=12|
-		6=7,7=6,12=12|
-		6=6,7=7,12=12|
-		6=1,7=6,12=13|
-		6=1,7=5,12=5|
-		6=0,7=1,12=1|
-		6=0,7=0,12=0|
-		6=0,7=0,12=0|
-		6=0,7=0,12=0
-	]]
+		lightenpal=read_kv_arr(
+		"0=0,1=13,2=8,3=1,4=9,5=13,"..
+		"6=7,7=7,8=14,9=10,10=7,"..
+		"11=7,12=6,13=6,14=15,15=7|"..
+		"0=0,1=12,2=14,3=7,4=10,5=7,"..
+		"6=7,7=7,8=7,9=7,10=7,11=7,"..
+		"12=7,13=7,14=7,15=7"
+	)
+	shield_darken_pal=read_kv_arr(
+			"6=6,7=7,12=12|"..
+			"6=7,7=6,12=12|"..
+			"6=6,7=7,12=12|"..
+			"6=1,7=6,12=13|"..
+			"6=1,7=5,12=5|"..
+			"6=0,7=1,12=1|"..
+			"6=0,7=0,12=0|"..
+			"6=0,7=0,12=0|"..
+			"6=0,7=0,12=0|"
+	)
 
 	spl_dat={
 		split[[93,-17,107,6,127,42,
@@ -111,128 +85,290 @@ function _init()
 		84,40,84,40,66,88,82,88,64,88,
 		64,88,44,39,55,40,35,40,35,41,
 		16,89,29,88,11,88,11,87,-10,
-		59,-9,41,-11]]
-
-	}
+		59,-9,41,-11]]}
+	
 	splines=read_splines(spl_dat)
-	shake=0
-	distance_blocked=false
-	spd=1
-	fenemy=false
+	--load sprite sheet music etc
+	-- reload(0,0,0x42ff,"shootinator.p8")
+	-- cstore(0,0,0x42ff)
 
-	mnu_hide_col()
 
-	--global tables
-	init_title()
-	#include levels.lua
-	music(0,0,3)
-	dialogs={ 
-		{[[
-yOU'LL NEVER DEFEAT US 
-IN THAT SHIP, WE
-DESIGNED.
-...]], 1},
-		{[[
-...
-iT CAN'T EVEN GO FULL 
-SPEED WHEN SHOOTING.]], 1},
-		{[[
-yOU INSULTED HUMANKIND
-fOR THAT ...
-
-... yOU wILL pAY!
-		]], 0},		
-		{[[
-i WILL SEND MY WEAKEST
-SHIPS AFTER YOU. tO
-GIVE YOU A FAIR CHANCE.
-		]], 1},
-		{[[
-yOU DO KNOW THAT WE ARE
-at war!!! rIGHT???
-
-ᶜ5-- IDIOT --ᶜ7
-		]], 0},{[[
-yOU MUS HAVE REALISED:
-tHAT SHIP CAN'T EVEN
-TURN AROUND. yOU WILL
-BE STUCK IN SPACE.
-]],1
-},{[[
-sTOP THIS INSANE FIGHT
-AND WE WILL HELP YOU 
-GET BACK TO EARTH.
-]],1},
-{[[
-...
-]],0}}
+	--#include levels.lua
+	init_game()
 	_g=_ENV
 end
+#include utils.lua
 
-function mnu_show_col()
-	menuitem(1, "hide coll", mnu_hide_col)
-	show_collision=true
+function add_score()
 end
-
-function mnu_hide_col()
-	menuitem(1, "show coll", mnu_show_col)
-	show_collision=false
-end
-
-
-
 
 function init_game()
-	music(8,250,3)
-	level=1
-	state=states.intro
-	init_level_intro(1)
+	state=states.game
 	srand(33)
-	mobs,buls,ebuls,enmys,pparts,
-	p_ups={},{},{},{},{},{}
-	tabs={mobs,buls,
-		enmys,ebuls,p_ups}
+	mobs={}
+	spd=1
+	buls={}
+	ebuls={}
+	enmys={}
+	pparts={}
+	p_ups={}
+	tabs={mobs,buls,enmys, ebuls, p_ups}
 	p=create_player()
 	p:upd()
 	shield=create_shield()
-	str_shield,str_rapid,str_spread
-	=false    ,false    ,false
-	invun,flash,score,spread,rapid,
-	d,lives,f ,score_mult,shots,
-	hits, kills=
-	0    ,0    ,0    ,0     ,0,
-	0,5    ,-1,1         ,0,
-	0   ,0
+	str_shield=false
+	str_rapid=false
+	str_spread=false
+	invun=0
+	lives=5
+	flash=0
+	score=0
+	spread=0
+	rapid=0
+	scene=8
+	kills=0
+	d=10
+	total_dist=60
+	f=-1
 	add(mobs,p)
 	add(mobs,shield)
 	stars = create_stars()
 	score_mult=1
+	msg=""
 
-	score_cols=split("12,12,6,6,13")
+	distance_spawns={}
+	init_scene(scene)
 
 end
 
-function init_level_intro(n)
-	dialog = 1
-	intro=1
+function add_enemy(e)
+	add(enmys,e)
+	add(mobs,e)
 end
 
-function draw_level_intro()
-	cls()
-	draw_stars()
-	draw_mobs()
-	textbox(unpack(dialogs[dialog]))
+function boss(x1,y1,ty1)
+	local _ENV=create_mob(128,x1,y1)
+	--todo extrac specific enemies
+	merge(_ENV, read_assoc(
+		"w=6,h=4,dy=1,sn=1,hp=10,pw=48,ph=32"
+	))
+	sprs=split("128")
+	sp=128
+	ty=ty1
+	function upd(_ENV)
+		fra +=1
+		flash=max(0, flash-1)
+		-- if fra%8==0 then
+		-- 	sn=sn%3+1
+		-- 	s=sprs[sn]
+		-- end
+		dx=cos(fra/64)
+		if y<ty then
+			dy=1
+		else dy=sin(fra/128) end
+	end
+	od=draw
+	function draw(_ENV)
+		palt(15,true)
+		palt(0,false)
+		od(_ENV)
+		palt(0,false)
+		if ((fra\20)%4==0) then
+			spr(134, x-8,y-8,2,2)
+		end
+		if ((fra\20)%4==1) then
+			spr(166, x-8,y-8,2,2)
+		end
+		if ((fra\20)%4==2) then
+			spr(134, x-8,y-8,2,2)
+		end
+		palt()
+	end
+	return _ENV
 end
 
-function update_level_intro()
-	if btnp(❎) then
-		if intro==1 then
-			if dialog<7 then 
-				dialog +=1
+function init_scene(number)
+	distance_spawns={}
+	msg=""..number
+	for e in all(enmys) do 
+		remove(e)
+	end
+	if scene==1 then
+		msg="scene 1 - flaps in a row"
+		add_enemy(flap(16,48,2))
+		add_enemy(flap(32,48,2))
+		add_enemy(flap(64,48,2))
+		add_enemy(flap(112,48,2))
+		create_powerup(1, 16,64)
+		create_powerup(2, 32,64)
+		create_powerup(3, 96,64)
+		create_powerup(4, 120,64)
+
+	end
+
+	if scene==2 then
+		msg="scene 2 - flaps in a col"
+		add_enemy(flap(16,16,2))
+		add_enemy(flap(64,32,2))
+		add_enemy(flap(96,56,2))
+	end
+
+	if scene==3 then
+		msg="scene 3 - discs from right"
+		f=0 --reset frame counter only in test cart
+
+		local function spawn1()
+				add_enemy( disc(1, 360))
+		end
+		for i=10,150,10 do
+			distance_spawns[i]=spawn1
+		end
+	end
+
+	if scene==4 then
+		msg="scene 4 - discs from left"
+		f=0 --reset frame counter only in test cart
+		distance_spawns={}
+		local function spawn1()
+			add_enemy( disc(2, 360))
+		end
+		for i=10,150,10 do
+			distance_spawns[i]=spawn1
+		end
+	end
+
+	if scene==5 then
+		msg="scene 5 - mixed discs"
+		f=0 --reset frame counter only in test cart
+		distance_spawns={}
+		local function spawn1()
+			add_enemy( disc(2, 360))
+		end
+		local function spawn2()
+			add_enemy( disc(1, 360))
+		end
+		for i=10,150,10 do
+			if i%20==0 then 
+				distance_spawns[i]=spawn1
 			else
-				state=states.game
+				distance_spawns[i]=spawn2
 			end
-		end 
+		end
+	end
+
+	if scene==6 then
+		for i=4,124,20 do
+			add_enemy( green(i, 32))
+		end
+	end
+
+	if scene==7 then
+		msg="7 spinshot - debug"
+			spinshot({x=64,y=64})
+	end
+
+	if scene==8 then 
+		msg="8 boss?"
+		add_enemy( boss(48,-32,16))
+	end
+
+	if scene==9 then
+		msg="9 blob"
+		add_enemy( blob(64,-8,64))
+	end
+
+	if scene==10 then
+		msg="10 blob fight"
+		add_enemy( blob(32,-8,10))
+		add_enemy( blob(96,-8,20))
+		add_enemy( blob(32,-8,64))
+		add_enemy( blob(64,-8,70))
+
+		local x=20
+		local xplus=20
+		function spawn()
+			add_enemy( green(x,8))
+			if (x+xplus >128 or x+xplus<0) then
+				xplus=-xplus
+			end
+			x=x+xplus
+		end
+		
+		for i=100,1000,100 do
+				distance_spawns[i]=spawn
+		end
+	end
+
+	function unpack_split(arg)
+		return unpack(split(arg))
+	end
+	function empty() end
+	--3363
+	--3282
+	--3278
+	local function box_brain2()
+		local box=create_mob(0,136,64)
+		box.draw=empty
+		local lazers={}
+		for i=1,4 do
+			local lazer = static(unpack_split("136,136,64,64,0.5,0,3"))
+			lazer.move=empty
+			lazer.hp=3
+			add_enemy(lazer)
+			add(lazers, lazer)
+		end
+		local fs,ang,dist,x,y,loff=unpack_split("0,0,102,64,64,0.625")
+		function box.upd()
+			fs+=1
+			if fs<60 then
+				dist-=0.71
+			end
+			if fs>200 and fs<230 then 
+				x+=1
+			end
+			if fs<200 then 
+				loff-=0x0.001
+			end
+			for i=1, #lazers do 
+				local lazer = lazers[i]
+				local lang = ang+.125+i*0.25
+				lazer.x,lazer.y=x+cos(lang)*dist,y+sin(lang)*dist
+				-- lazer.y = y+sin(lang)*dist
+				lazer.ang= lang+loff+sin(t()*1.5)/100
+			end
+
+			if fs>60 then 
+				ang=ang-0x.01
+			end
+
+		end
+
+
+		return box
+	end
+
+	if scene==11 then
+		msg="11 Box "
+		f=0
+
+		add(mobs,box_brain2())
+
+	end
+
+	if scene==12 then
+		msg="12 Level beginning - removed"
+				f=0 --reset frame counter only in test cart
+		-- distance_spawns=level_dat
+		
+		-- distance_spawns = level_dat
+		
+	end
+
+	if scene==13 then
+		msg="13 Lazer turret"
+		add_enemy( lazer(0,0,64,64))
+		add_enemy( lazer(0,0, 60,60))
+		add_enemy( lazer(0,0, 68,68))
 	end
 end
 
@@ -249,26 +385,26 @@ end
 
 #include mob.lua
 
-function create_pbul(_x,_y,dx)
+function create_pbul(x,y,dx)
 	dx=dx or 0
-	local bul=create_mob(17,_x,_y)
-	local _ENV = bul
-	pow=1
-	dy=-2
-	fra=rnd(27)\1
-	function upd(_ENV)
-		self=_ENV
-		x+=dx*spd
-		fra+=1
-		fra=fra%27
-		if x<-8 or	x>132 
-		or	y<-8 or	y>132 then
+	local bul=create_mob(17,x,y)
+	bul.pow=1
+	bul.dy=-2
+	bul.fra=rnd(27)\1
+	function bul:upd()
+		self.x +=dx
+		self.fra+=1
+		self.fra=self.fra%27
+		if self.x<-8 or
+			self.x>132 or
+			self.y<-8 or
+			self.y>132 then
 				remove(self)
 		end
 	end
-	bul.olddraw=draw
-	function draw()
-		local f=fra\9
+	bul.olddraw=bul.draw
+	function bul:draw()
+	local f=self.fra\9
 		if f==0 then
 			pal(12,7)
 			pal(13,12)
@@ -278,23 +414,23 @@ function create_pbul(_x,_y,dx)
 			pal(12,7)
 			pal(13,7)
 		end
-		bul:olddraw()
+		self:olddraw()
 		pal()
 	end
 	add(mobs,bul)
 	add(buls,bul)
 end
 
-function create_pbulc(_x,_y)
-	local _ENV=create_mob(5,_x,_y)
-	function upd()
-		s=fra+5
-		if s>8 then
-			remove(_ENV)
+function create_pbulc(x,y)
+	local imp=create_mob(5,x,y)
+	function imp:upd()
+		self.s=self.fra+5
+		if self.s>8 then
+			remove(self)
 		end
-		fra+=1
+		self.fra+=1
 	end
-	return _ENV
+	return imp
 end
 
 function create_muz(x,y) 
@@ -308,33 +444,65 @@ function create_muz(x,y)
 			offx=x-p.x,
 			offy=y-p.y
 		})
-	local _ENV=muz
 	
-	function upd(_ENV)
-		mf+=1
-		f=mf\2
-		if f>2 then
-			remove(_ENV)
+	function muz:upd()
+		local mf=self.mf+1
+		local f=mf\2
+		if f>3 then
+			remove(self)
 		end
+		muz.mf,muz.f=mf,f
 	end
 	
-	function draw()
-		local x=p.x+offx-pw/2
-		local y=p.y+offy-ph/2
-
-		local muz_pal=read_kv_arr[[
-			10=7,9=7,8=7,2=12|
-			10=7,9=7,8=12,2=13|
-			10=7,9=12,8=13,2=1|
-			10=7,9=12,8=13,2=1|
-			10=7,9=12,8=13,2=1
-		]]
-
-		pal(muz_pal[mf])
-		if f<4 then
+	function muz:draw()
+		local f=self.mf
+		local x=p.x+self.offx-self.pw/2
+		local y=p.y+self.offy-self.ph/2
+		--fixme compress
+		if f==0 then
+			pal(10,7) --yellow>w
+			pal(9,7) --orange>w
+			pal(8,7) --red>w
+			pal(2,7) --dred>w
+			spr(16,x,y,1,1,false,true)
+		end
+		if f==1 then
+			pal(10,7) --yellow>w
+			pal(9,7) --orange>w
+			pal(8,7) --red>w
+			pal(2,12) --dred>b
 			spr(16,x,y,1,1,false,true)
 			spr(16,x,y+8,1,1)
-		else 
+		end
+		if f==2 then
+			pal(10,7) --yellow>w
+			pal(9,7) --orange>w
+			pal(8,12) --red>b
+			pal(2,13) --dred>b
+			spr(16,x,y,1,1,false,true)
+			spr(16,x,y+8,1,1,false,false)
+		end
+		if f==3 then
+			pal(10,7) --yellow>w
+			pal(9,12) --orange>b
+			pal(8,13) --red>bg
+			pal(2,1) --dred>db
+			spr(16,x,y,1,1,false,true)
+			spr(16,x,y+8,1,1,false,false)
+		end
+		if f==4 then
+			pal(10,7) --yellow>w
+			pal(9,12) --orange>b
+			pal(8,13) --red>bg
+			pal(2,1) --dred>db
+			spr(34,x+1,y,1,1,false,true)
+			spr(34,x+1,y+8,1,1,false,false)
+		end
+		if f==5 then
+			pal(10,7) --yellow>w
+			pal(9,12) --orange>b
+			pal(8,13) --red>bg
+			pal(2,1) --dred>db
 			spr(34,x+1,y,1,1,false,true)
 			spr(34,x+1,y+8,1,1,false,false)
 		end
@@ -350,41 +518,14 @@ function _update60()
 	state.update()
 end
 
-function spawn(sp)
-	local mob = sp.func(
-		unpack(sp.params))
-	if sp.class == "en" then
-		add(enmys,mob)
-		add(mobs,mob)
-	end
-
-end
-
 function update_game()
 	f+=1
-	if not distance_blocked then
-		d+=1
+
+	if distance_spawns[f] then
+		distance_spawns[f]()
 	end
-	if score>hi and f%7==1 
-		and hi>0
-	then 
-		add(score_cols, deli(score_cols),1)
-	end
+
 	invun=max(0,invun-1)
-	spread=max(0,spread-1)
-	rapid=max(0,rapid-1)
-	foreach(spawn_tab[d],spawn)
-
-	if d>total_dist and #enmys==2 and not fenemy then 
-		fenemy=true
-	end
-
-	if d>=total_dist and #enmys==0 then
-		spd=0.25
-		if #pparts == 0 then init_win() end
-	end
-		
-			
 		
 	input()
 	for m in all(mobs) do
@@ -397,61 +538,47 @@ function update_game()
 end
 
 function input()
-	local _ENV = p
-	s=10
-	dx=0
-	dy=0
-	local speed=stime>0 and 1.25 or 1.875
+	p.s=10
+	p.dx=0
+	p.dy=0
+	local speed=p.stime>0 and 1 or 1.5
+	speed=speed*spd
 	if btn(⬆️) then
-		dy=-speed
+		p.dy=-speed
 	end
 	if btn(⬇️) then
-		dy=speed
+		p.dy=speed
 	end
 	if btn(⬅️) then
-		dx=-speed
+		p.dx=-speed
 	end
 	if btn(➡️) then
-		dx=speed
+		p.dx=speed
 	end
-	if dx~=0 and dy~=0 then
-		dx*=0.707
-		dy*=0.707
-	end
-	if btn(❎) and stime<=0 then
+	if btn(❎) and p.stime<=0 then
 		sfx(63)
-		stime=13
-		if rapid>0 then
-			stime=6
+		p.stime=13
+		if rapid>0 then 
+			p.stime=6
 		end
-		local bully=y-4
-		local bullx=can and x+2 or x-2
-		can=not can
+		local y=p.y-4
+		local x=p.x-2
+		if p.can then
+			x=x+4
+		end
+		p.can=not p.can
 
-		create_pbul(bullx,bully)
-		_g.shots+=1
+		create_pbul(x,y-6)
 		if spread >0 then 
-			create_pbul(bullx,bully,-0.5)
-			create_pbul(bullx,bully,0.5)
+			create_pbul(x,y,-0.5)
+			create_pbul(x,y,0.5)
 		end
 		create_muz(p.x-1,p.y-12)
 	end
-	if btn(🅾️) then 
-		if btn(⬅️) and str_spread then
-			_g.spread += 240
-			_g.str_spread =false
-			sfx(55)
-		end
-		if btn(➡️) and str_rapid then
-			_g.rapid += 240
-			_g.str_rapid = false
-			sfx(55)
-		end
-		if btn(⬆️) and str_shield then
-			_g.invun += 120
-			_g.str_shield =false
-			sfx(55)
-		end
+	if btnp(🅾️) then 
+	--scene_limit
+	scene = (scene)%13+1
+	init_scene(scene)
 	end
 end
 
@@ -461,88 +588,15 @@ end
 
 function draw_game()
 	cls(0)
-	if shake>0 then
-		if f%2==0 then
-			camera(rnd(4)-2,rnd(4)-2)
-		end
-		shake-=1
-	else 
-		camera()
-	end
-	if flash > 5 then
-		if flash >15 then
-			fillp(▒)
-		else fillp(░) end
-		rectfill(0,0,128,128,2)
-		fillp()
-		circfill(64,64,90-flash,0)
-		circ(64,64,90-flash,8)
-		
-	end
+	print("press z to change scene",0,0,7)
+	print(msg)
+	print("mobs:" ..#mobs)
+
 
 	draw_stars()
 	draw_pparts()
-	stripe("d",125,30,split("7,7,6,13,5"))
-	stripe("s",125,36,split("7,7,6,13,5"))
-	stripe("t",125,42,split("7,7,6,13,5"))
-	clip()
-	--spr(85,125,20,1,2)
-	rect(unpack(split("125,50,127,127,1")))
-	d=min(d,total_dist)
-	line(126,126,126,126-(75*(d/total_dist)),11)
 	draw_mobs()
 	
-	for i=1,5 do
-		--local s=9
-		if i<lives+1 then
-			spr(9,(i*8)-8,0)
-		end
-		
-	end
-	local sc="sc: "..tostr(score,0x2)
-	clip(0,0,0,0)
-	
-	local w=print(sc,0,0)
-	stripe(sc,100-w,0,score_cols)
- clip(0,0,0,0)
-	
-	if hi ~= 0 then 
-		local hi_formatted="hi: "..tostr(hi,0x2)
-		local w=print(hi_formatted,0,0)
-		stripe(hi_formatted,100-w,6,split("13,13,5,1,1"))
-	end
-
-	clip()
-	darkened_spr(str_shield,58,113,0) -- print(2,121,0,7)
-	darkened_spr(str_spread,57,104,8) -- print(3,99,10,7)
-	darkened_spr(str_rapid, 59,120,8) -- print(1,123,17)
-	pal()
-	local col=1
-	if str_shield 
-	or str_spread
-	or str_rapid then
-		col=7
-	end
-	print("🅾️", 114,10,col)
-
-	-- print(#enmys, 64,64,7)
-	
---	
---	print(#mobs,0,0,7)
---	print(#buls)
---	print(#enmys)
--- print(shots, 0,0,7)
--- print(hits)
--- print(kills)
--- print(lives)
-end
-
-function darkened_spr(light, sp, x, y)
-	if not light then 
-		pal(split"1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")
-	end
-	spr(sp, x, y)
-	pal()
 end
 
 function draw_mobs()
@@ -569,7 +623,35 @@ end
 -->8
 --tools
 
-#include utils.lua
+--merges associative tables
+function merge(t1,t2)
+	for k,v in pairs(t2) do
+		t1[k]=v
+	end
+	return t1
+end
+
+--reads multiple assoc tables
+function read_kv_arr(str)
+	local tbls=split(str,"|")
+	for k,v in pairs(tbls) do
+		tbls[k]=read_assoc(v)
+	end
+	return tbls
+end
+
+--reads a single comma seperated
+--key-value string
+function read_assoc(str)
+		local tab={}
+		local kvs=split(str,",")
+		for kv in all(kvs) do
+			local k,v=unpack(
+				split(kv,"="))
+			tab[k]=v
+		end
+	return tab
+end
 
 -- removes a obj from all of the
 -- main tables
@@ -579,7 +661,13 @@ function remove(obj)
 	end
 end
 
-
+--redefine sgn so sgn(0)=0
+function sgn(n)
+	if n==0 then
+		return 0
+	end
+	return n/abs(n)
+end
 
 function create_stars()
 	local l0={}
@@ -597,17 +685,50 @@ function create_stars()
 	return {l0,l1,l2}
 end
 
+--distance vunerable to overflow
+function dist(p1,p2) 
+	return ((p2.x-p1.x)^2+(p2.y-p1.y)^2)^0.5
+end
+
+--cubic bezier single dimension
+function cub_b_p(a,b,c,d,t)
+	local tm=1-t
+	return tm*tm*tm*a+
+		tm*tm*3*t*b+
+		tm*3*t*t*c+
+		t*t*t*d
+end
+
+--cubic bezier x&y
+function cub_bez(p1,p2,p3,p4,t)
+	return {x=cub_b_p(p1.x,
+	p2.x,
+	p3.x,
+	p4.x,
+	t),
+	y=cub_b_p(p1.y,
+	p2.y,
+	p3.y,
+	p4.y,
+	t)}
+end
+
+
+function contains(table,val)
+	for e in all(tbl) do
+		if e==val then
+			return true
+		end
+	end
+	return false
+end
+
 function stripe(txt, x, y, cols)
 	local w = print(txt,x,y,0)
 	for i=1,#cols do
 		clip(x,y+i-1,w,1)
 		print(txt,x,y,cols[i])
 	end
-	clip()
-end
---Add to score
-function add_score(num)
-	score+=num>>>16
 end
 -->8
 --title
@@ -617,29 +738,6 @@ function init_title()
 	titley=-9
 	fact1=0
 	stars=create_stars()
-	ti=1
-	texts={
-		{},
-		{
-[[fOR YEARS THE ALIENS HAVE
-helped HUMANITY. THEY HELPED
-US BUILD FASTER-THAN-LIGHT
-TRAVEL. THEY GAVE US FUSION
-POWER.
-
-HOWEVER THE ᶜbALIEN OVERLORDᶜ7
-HAS SAID THAT THE BEST art
-HUMANS EVER MADE WAS 
-THE spice girls!]],8,55,7},
-			{
-[[
-fOR THIS INSULT THEY
-MUST BE PUNISHED.
-
-ᶜcshootinateᶜ7 THEM
-UNTIL THEY ᶜ8dieᶜ7
-]], 20,60,7}}
-	text={}
 end
 
 function draw_title()
@@ -650,19 +748,24 @@ function draw_title()
 	96,74-titley,1)
 	fillp()
 	fspr(0,96,68,9,30,titley,fact1)
-
-	unpack_print(texts[ti])
-	print("press x to start",30,122,8)
-	if ti>2 then 
-		print("⬅️",0,122,7)
-	end
-	if ti>1 and ti<#texts then
-		print("➡️",120,122,7)
-	end
-end
-
-function unpack_print(tbl)
-	print(unpack(tbl))
+	local ln=50
+	print("for years the aliens have helped",0,ln,7)
+	ln+=6
+	print("humanity. they helped us produce",0,ln,7)
+	ln+=6
+	print("faster than light travel.",0,ln,7)
+	ln+=6
+	print("however the alien overlord has",0,ln,7)
+	ln+=6
+	print("said that the best music humans",0,ln,7)
+	ln+=6
+	print("ever made was the spice girls",0,ln,7)
+	ln+=10
+	print("for this insult.",0,ln,7)
+	ln+=6
+	print("they must be punished!",0,ln,7)
+	ln+=18
+	print("shootinate them until they die.",0,ln,7)
 end
 
 function update_title()
@@ -673,23 +776,11 @@ function update_title()
 	if f==46 or f==90 then
 		sfx(62)
 	end
-	if f==46 then 
-		ti=2
-	end
-
 	fact1=easeinoutquart(
 		mid(0,(f-120)/60,1))
 	if btn(❎) or btn(🅾️) then
 		init_game()
 	end
-
-	if btn(⬅️) and ti>1 then
-		ti-=1
-	end
-	if btn(➡️) and ti>1 then
-		ti+=1
-	end
-	ti= mid(2,ti,#texts)
 end
 
 function fspr(sx,sy,sw,sh,
@@ -717,6 +808,41 @@ function fspr(sx,sy,sw,sh,
 	end
 	pal()
 	clip()
+end
+
+function fspr2(n,x,y,w,h,fx,fy)
+	local w=w or 1
+	local h=h or 1
+	local pw=w*8
+	local ph=h*8
+	local fx=fx or false
+	local fy=fy or false
+	local effectwidth=5
+	local min=x-effectwidth-ph
+	local max=x+pw
+	local dur=100
+	local t=0
+	return function()
+		local pos=min+(max-min)*easeinoutquart(t/dur)
+		pal() --default
+		spr(n,x,y,w,h,fx,fy)
+		for l=1,ph do 
+			clip(pos+ph-l,y+l-1,effectwidth,1)
+			pal(lightenpal[1]) --mid
+			spr(n,x,y,w,h,fx,fy)
+			clip(pos+effectwidth/2+ph-l,y+l-1,1,1)
+			pal(lightenpal[2]) -- light
+			spr(n,x,y,w,h,fx,fy)
+			if t>dur then
+				t=0
+			end
+			clip()
+			pset(pos,64,4)
+		end
+		t+=1
+	
+		pal()
+	end
 end
 
 function easeinoutquart(t)
@@ -763,8 +889,6 @@ function check_collision()
 				e:hurt(b.pow)
 				remove(b)
 				add(mobs,create_pbulc(b.x,b.y))
-				hits+=1
-				impact_pparts(b.x,b.y)
 			end
 		end
 		
@@ -773,40 +897,22 @@ function check_collision()
 		end
 	end
 	for eb in all(ebuls) do 
-			if collided(eb,p) then
-				hurt_player()
+			if collided(eb,p) and invun<=0 then
+			lives-=1
+			invun=80
+			flash=20
+			sfx(59)
+			shake=6
 		end
 	end
-	
+
 	local handlers = {
 		function()
 			if p.lives <5 then
-				lives += 1
+				p.lives += 1
 				float("+1", p.x,p.y-10,14)
 			else
-				add_score(2000)
 				float(2000, p.x,p.y-10,6)
-			end
-		end,
-		function()
-			if str_spread then
-				spread+=240
-			else 
-				str_spread=true
-			end
-		end,
-		function()
-			if str_shield then
-				invun+=60
-			else 
-				str_shield=true
-			end
-		end,
-		function()
-			if str_rapid then
-				rapid+=240
-			else
-				str_rapid=true
 			end
 		end
 	}
@@ -831,11 +937,6 @@ function hurt_player()
 	flash=20
 	sfx(59)
 	shake=6
-	if lives<0 then
-		init_over()
-		return
-	end
-	
 end
 
 function collided(mob1,mob2)
@@ -870,25 +971,22 @@ function draw_pparts()
 	end
 end
 
-function mob_to_ppart(_ENV, mult)
+function mob_to_ppart(obj)
 	
-	local sp=s
-	local mult=mult or 1
+	local sp=obj.s
 	local xmin,ymin=(sp%16)*8,(sp\16)*8
-	local xmax,ymax=w*8+xmin-1,h*8+ymin-1
-	for _x=xmin,xmax do
-		for _y=ymin,ymax do
-			colour = sget(_x,_y)
+	local xmax,ymax=obj.w*8+xmin-1,obj.h*8+ymin-1
+	for x=xmin,xmax do
+		for y=ymin,ymax do
+			colour = sget(x,y)
 			--change if transparent
-			if colour!=tc or 0 then
+			if colour!=0 then
 				dx = rnd(2)-1
 				dy = rnd(2)-1
-				dx*=mult
-				dy*=mult
 				life=rnd(20)+10
 				local p = create_ppart(
-					_x-xmin+x-pw/2,
-					_y-ymin+y-ph/2,
+					x-xmin+obj.x-obj.pw/2,
+					y-ymin+obj.y-obj.ph/2,
 					dx,dy,life,life,colour
 					)
 				add(pparts,p)
@@ -908,21 +1006,13 @@ function float(txt,x,y,col)
 			return life>0
 		end,
 		draw = function ()
-			text_outline(txt,left,y)
+			print(txt, left-1,y,0)
+			print(txt, left+1,y,0)
+			print(txt, left,y-1,0)
+			print(txt, left,y+1,0)
 			print(txt, left,y,col)
 		end
 	})
-end
-
-function impact_pparts(x,y)
-	for i=1,6 do 
-		local dir=rnd(0.4)+0.55
-		local sp=rnd()+1
-		local dx,dy=cos(dir)*sp,sin(dir)*sp
-		add(pparts,
-			create_ppart(
-				x,y,dx,dy,rnd(10)+5,128,12))
-	end
 end
 
 function create_ppart(
@@ -938,9 +1028,9 @@ function create_ppart(
 		update = function()
 			dy=dy*0.95
 			dx=dx*0.95
-			x+=dx*spd
-			y+=dy*spd
-			life-=spd
+			x+=dx
+			y+=dy
+			life-=1
 			if (life<0) return false
 			if (x<0 or x>128) return false
 			if (y>128) return false
@@ -955,117 +1045,6 @@ function create_ppart(
 		end
 	}
 end
--->8
---ui/dialog
-
-#include textbox.lua
-
-function init_win()
-	music(-1,1000)
-	sfx(25, 2)
-	hi,spd=max(score,hi),1
-	dset(0,hi)
-	f=-1
-	over_f=0
-	state=states.win
-	memcpy(0x8000, 0x6000, 0x2000)
-end
-
-
-
-
-function draw_win()
-	clip()
-	memcpy(0x6000,0x8000,0x2000)
-	palt(0,false)
-	for i=1,500 do
-		local x,y=rnd(128),rnd(128)
-		local c=mpget(x,y)
-		--printh("x:"..x.." y:"..y.." c:"..c)
-		pset(x,y, c)
-	end
-	memcpy(0x8000, 0x6000, 0x2000)
-	local accuracy = tostr(flr((hits/shots)*1000)/10)
-	
-
-	local results = {
-		"stage 1 finished",
-		"……………………",
-		"",
-		"sHOTS FIRED : "..shots,
-		"kILLS       : "..kills,
-		"hITS        : "..hits,
-		"aCCURACY    : "..accuracy.."%",
-		"",
-		"sCORE       :"..tostr(score,0x2),
-		"tOTAL sCORE :"..tostr(score,0x2),
-		
-	}
-
-	for i=1,#results do
-		-- print(results[i], max(128*i-over_f*8,24), 20+i*6, 7 )
-		local x,y=max(128*i-over_f*8,24), 20+i*6
-		text_outline(results[i],x,y)
-		stripe(results[i], x, y,split("7,7,6,13,5"))
-	end
-end
-
-function text_outline(txt,x,y)
-	for j=0,8 do
-		local ox=j%3-1
-		local oy=j\3-1
-		print(txt,x+ox,y+oy,0)
-	end
-end
-
-function mpget(x,y)
-	local spr=mget(x\8,y\8)
-	local sx,sy=(spr % 16) * 8+x%8, (spr \ 16) * 8+y%8
-	return sget(sx,sy)
-end
-
-function init_over()
-	music(21)
-	sfx(53)
-	spd=0.2
-	hi=max(hi,score)
-	
-	dset(0,hi)
-	state=states.game_over
-	f=-1
-
-	over_f=1
-end
-
-function draw_over()
-	cls()
-	if over_f < 120 then
-		draw_game()
-	end
-	print("game over", 40,40,7)
-end
-
-function update_over()
-	-- update_game()
-	if over_f == 30 then 
-		del(mobs,p)
-		p.x-=8
-		mob_to_ppart(p,3)
-	end
-	if over_f>30 then update_pparts() end
-	over_f+=1
-	if btn(❎) or btn(🅾️) then
-		if (over_f>60) init_game()
-	end
-end
-
-function update_win() 
-	update_over()
-	if over_f==30 then
-		sfx(24,3)
-	end
-end
-
 __gfx__
 00008e700e0e0000020200000000006c76600000dc777ccddc777ccd1dc7cdd10111111008008000000000008080000800800000800080000080080000808000
 1dc09a70e8e880002020200000006c7707000000ddc7cddddcc7ccdd1cc7cc1101c7c1000900900000000000f0f0000f00f000009000f00000f00f0000f0f000
@@ -1131,38 +1110,38 @@ a9999ae888499999500a9ae88849900500005ae88840500000099ae888499000d00000d1dd6c566d
 0000509994000000000005099940000000940000055044000005099940000000010006155551dccc0b33150b511b331500b3350b5315b315000b315b531b3315
 0000500940000000000000509940000000000000000500000005099400000000010006155551d5550b3115005555311500b31505b315315000005505b3153115
 00000009400000000000000509400000000000000000000000050940000000000011111111011111005550000000555000055000555055000000000055555550
-ffffffffffffffffffffffffffffffffffffffffffffffff17716611116616710000002a99a77a992000000000000000000000000000bbb3eeeeeeeeeeeeeeee
-fffffffffff9a9aaffffa9a9a9a9ffff9a9a9affffffffff776d1177771166d7000929a9aaaaaa999920000000003335013b3b100001bb33eeeeeeeeeeeeeeee
-fffffffffff99999ffff99999999ffff999999ffffffffff61d1771cc1661d1600909a9aa9aaa9aaaa9200000003a93353b3b3b3100b7b33eeeeeeeeeeeeeeee
-fffffffff7711111777711111111777711111177ffffffff66171cc77c116166090999a9999a9a9a7aa90000000aaa933b3b333bb117bb31eeeeeeeeeeeeeeee
-ffffffff76767766161616616616616166777666ffffffff6170b7710b011616029aa9499a999999aaa92000000aaaa3533310333bbb3313eeeeeeeeeeeeeeee
-ffffffff776766d6616111111111161667666d66ffffffff617073107ab0161609aa949499aa49499aaa9900000a11a33310000013333b31eeeeeeeeeeeeeeee
-fffffff7967766d6661777777777716667666d669fffffff17071930a19b016129aa49424494944249aaa900000a17a3500331000013bb13eeeeeeeeeeeeeeee
-fffffff76966dd66617666666666671666ddd6696fffffff160a19b0a19301619aa94494224449249a9aa900000a11a300393330000bbb31eeeeeeeeeeeeeeee
-ffffff7676928d171771661111661671d172829666ffffff1600a0330a3330619a949449ffff9249ff9aa2000000113000aa9335000b7bb3eeeeeeeeeeeeeeee
-ffffff7966282d17776d1177771166d7d176282666ffffff161101030500b36199494494ff244fff2499290000000000011aa9335007b7b1eeeeeeeeeeeeeeee
-fffff76692826d1761d1771cc1661d16d1766282696fffff6160880130b3311d98944f42f22244ff2249909000000000017aa93531017bb3eeeeeeeeeeeeeeee
-fffff77628266d1766171cc77c116166d1766628966fffff616876800b31371689824f2fff777fff77f9290000000000011aa9335b00bbb1eeeeeeeeeeeeeeee
-ffff766728266d17617b07710b011616d17666282666ffff6616883b131371d6982f49fff7c1cff91c78090000000000011aa935b300b7b3eeeeeeeeeeeeeeee
-ffff776628275176617a70107ab016166d1756282666ffff61716603b377171d294f99fff7107ff9077290000000000000aa93333b1007b1eeeeeeeeeeeeeeee
-ffff76162875d17617a1ab001a9b01616d17d5282616ffff17661166771176d1984f9ffff7101fff417829000000000000393335b3b10713eeeeeeeeeeeeeeee
-fff76181285dd17616a193b01a93b0616d17dd582181dfff7d66d11111176d6d494fffffffc1cfff74f2800000000000000331013bbbb331eeeeeeeeeeeeeeee
-fff718e8285dd176160a5033aa3030616d17dd5828e81fff17716611116616710494fff77ffffffff4f00000000333333100000003b31313eeeeeeeeeeeeeeee
-fff76181285dd176161001030500b3616d17dd582181dfff776d1177771166d70049ffffff7fffffff4000000028e8ee3331000000313331eeeeeeeeeeeeeeee
-fff76616285dd1766161108e30b3311d6d17dd582616dfff61d1771cc1661d1600989ffffffffff4f440000002877778ee3310000001bb33eeeeeeeeeeeeeeee
-fff761812825d176616108778b313716dd17d5182181dfff66171cc77c006166000984fffffffffffff00000087070707ee353100000bb33eeeeeeeeeeeeeeee
-fff718981261517666161088031371d66d17516218981fff6171077110a006160000424ffffff0002f2000000087070788e335b3b10bbbb3eeeeeeeeeeeeeeee
-fff7618162661d1761716600b377171dd176116261815fff61710a310a19061600000024ffffffffff0000000003888888335b3b3b3b31b3eeeeeeeeeeeeeeee
-ffff661666261d1717661166771176d1d1766126661dffff1710a1930a19b0610000002244fffffff20000000000333333350013331311b3eeeeeeeeeeeeeeee
-ffffddddd6621d177d66d11111176d6dd176626dddd5ffff1610a19b0a19306100000222244fffff20000000000000000000000000000133eeeeeeeeeeeeeeee
-ffff6666d6662d6fd66d1d6d6d61d6dd176662666d65ffff16110a3310ab3161eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-fffff6666d6626dffdd166d6d6d61ddf66666266dddfffff1611010301033b61eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-fffff66655d62d6fffd66dddddd6dd5f6655626d661fffff6160e88e3010311deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-fffffd65115d26dfffd5dd1111dd555f651152dd6d1fffff61687008eb313716eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-fffffd5677662d6fffd551fffffd551f66776266d51fffff66168888131371d6eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-fffffd55162222dfffe222fffffe222f6222222dd51fffff61716603b377171deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-fffffd22f28888fffff88fffffff88fff888888f222fffff17661166771176d1eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-ffffff88fffffffffffffffffffffffffffffffff88fffff7d66d11111176d6deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+ffffffffffffffffffffffffffffffffffffffffffffffff17711177771116710000002a99a77a992000000000000000000000000000bbb3eeeeeeeeeeeeeeee
+fffffffffff9a9aaffffa9a9a9a9ffff9a9a9affffffffff1761771cc16616d1000929a9aaaaaa999920000000003335013b3b100001bb33eeeeeeeeeeeeeeee
+fffffffffff99999ffff99999999ffff999999ffffffffff61171cc77c11611600909a9aa9aaa9aaaa9200000003a93353b3b3b3100b7b33eeeeeeeeeeeeeeee
+fffffffff7711111777711111111777711111177ffffffff6170c77110011616090999a9999a9a9a7aa90000000aaa933b3b333bb117bb31eeeeeeeeeeeeeeee
+ffffffff76767766161616616616616166777666ffffffff1710ab010ab01161029aa9499a999999aaa92000000aaaa3533310333bbb3313eeeeeeeeeeeeeeee
+ffffffff776766d6616111111111161667666d66ffffffff17071ab0719b016109aa949499aa49499aaa9900000a11a33310000013333b31eeeeeeeeeeeeeeee
+fffffff7967766d6661777777777716667666d669fffffff710a1930a193300629aa49424494944249aaa900000a17a3500331000013bb13eeeeeeeeeeeeeeee
+fffffff76966dd66611666111166611666ddd6696fffffff7110a33b0a30b3b69aa94494224449249a9aa900000a11a300393330000bbb31eeeeeeeeeeeeeeee
+ffffff7676928d171771117777111671d172829666ffffff71100003000103369a949449ffff9249ff9aa2000000113000aa9335000b7bb3eeeeeeeeeeeeeeee
+ffffff7966282d171761771cc16616d1d176282666ffffff71088300b330033699494494ff244fff2499290000000000011aa9335007b7b1eeeeeeeeeeeeeeee
+fffff76692826d1761171cc77c116116d1766282696fffff168768b00333bb7198944f42f22244ff2249909000000000017aa93531017bb3eeeeeeeeeeeeeeee
+fffff77628266d176170c7710b011616d1766628966fffff16088333000b337189824f2fff777fff77f9290000000000011aa9335b00bbb1eeeeeeeeeeeeeeee
+ffff766728266d17170b01107ab01161d17666282666ffff61603003333b3716982f49fff7c1cff91c78090000000000011aa935b300b7b3eeeeeeeeeeeeeeee
+ffff776628275176170ab0101a9300616d1756282666ffff6116010b3b33711d294f99fff7107ff9077290000000000000aa93333b1007b1eeeeeeeeeeeeeeee
+ffff76162875d17170a1ab001a33b3061d17d5282616ffff17616610037716d1984f9ffff7101fff417829000000000000393335b3b10713eeeeeeeeeeeeeeee
+fff76181285dd17170a193b0aa3003b61d17dd582181dfff7d66116677116d6d494fffffffc1cfff74f2800000000000000331013bbbb331eeeeeeeeeeeeeeee
+fff718e8285dd171710a3330000110361d17dd5828e81fff17711177771116710494fff77ffffffff4f00000000333333100000003b31313eeeeeeeeeeeeeeee
+fff76181285dd1717110003b330003361d17dd582181dfff1761771cc16616d10049ffffff7fffffff4000000028e8ee3331000000313331eeeeeeeeeeeeeeee
+fff76616285dd176160883003333bb716d17dd582616dfff61171cc77cb0611600989ffffffffff4f440000002877778ee3310000001bb33eeeeeeeeeeeeeeee
+fff761812825d176168778b0000b3371dd17d5182181dfff6171c77010ab0616000984fffffffffffff00000087070707ee353100000bb33eeeeeeeeeeeeeeee
+fff718981261517661688333003b37166d17516218981fff17110ab00719b0610000424ffffff0002f2000000087070788e335b3b10bbbb3eeeeeeeeeeeeeeee
+fff7618162661d176116303b3b33711dd176116261815fff171071ab0a1a306100000024ffffffffff0000000003888888335b3b3b3b31b3eeeeeeeeeeeeeeee
+ffff661666261d1717616600037716d1d1766126661dffff7110a1930a1930060000002244fffffff20000000000333333350013331311b3eeeeeeeeeeeeeeee
+ffffddddd6621d177d66116677116d6dd176626dddd5ffff71110a3330a3b3b600000222244fffff20000000000000000000000000000133eeeeeeeeeeeeeeee
+ffff6666d6662d6fd66d1d111161d6dd176662666d65ffff711000003b003336eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+fffff6666d6626dffdd166d6d6d61ddf66666266dddfffff7108880103300336eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+fffff66655d62d6fffd66dddddd6dd5f6655626d661fffff168767801033bb71eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+fffffd65115d26dfffd5dd1111dd555f651152dd6d1fffff1680e080000b3371eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+fffffd5677662d6fffd551fffffd551f66776266d51fffff61688833333b3716eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+fffffd55162222dfffe222fffffe222f6222222dd51fffff6116330b3b33711deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+fffffd22f28888fffff88fffffff88fff888888f222fffff17616610037716d1eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+ffffff88fffffffffffffffffffffffffffffffff88fffff7d66116677116d6deeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
 01222122002210222101222100129aa1222212200211222109aa9201112221022221000000000000000000045944941044444444424444444444544444444444
 12aa424a11a4229a92129a921129aa22aaaa2aa22a229a92109aa922129a9219aaa2100000000000000000495440400049444444440444444445094444944494
 2a99a2aa22aa29aaa929aaa9229aa2119aa92aa92a29aaa92019aaa229aaa92aa9aa200000f00000000000044500000041144444404e44444445014444444444
@@ -1195,136 +1174,6 @@ ffffff88fffffffffffffffffffffffffffffffff88fffff7d66d11111176d6deeeeeeeeeeeeeeee
 00000000000000000000000000000000000000000000000044444444444444490000041444000000000000000009000044444444444444444444451644449694
 00000000000000000000000000000000000000000000000041444454444444440000004410000000094000000092440044544494444544449444449444449111
 00000000000000000000000000000000000000000000000044444444445444440000004410000000924494004244420444444444444444444445444444444919
-__label__
-58008000080080000800800008008000080080000001000000000000000007770000000000000000000000000000000000000000000000000001111000000000
-0900900009009000090090000900901009009000000000000000000000000c0c1000000000000000000000000000000000000000000000000011100100000000
-097c9000097c9000097c9000097c9000097c9000000000000000000000000c0c0000000000000000000000000000000000000000000000000111001110000000
-a7ccd900a7ccd900a7ccd900a7ccd900a7ccd9000000000000000000000006060000000000000000000000000000000000000000000000000110000110000000
-91cdd90091cdd90091cdd90091cdd90091cdd900000100000000000000000ddd0000000000000000000000000000000000000000000000000100000010000000
-09119000091190000911900009119000091190000000000000000000000000000000000000000000000000000000000000000000000000000101001110000000
-05005000050050000500500005005000050050000000000000100000000000000000000000001000000000000000000000000010000000000011101100000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011100
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000001111100011100
-00000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000101110010011000110001000
-000000000000000000000000000000d0000000000000000000000000d00000000000000000000000000000000000000000000000111110110011010110010000
-00000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000111101110011000110111000
-0000000000000000000000000000000000000000000000d000000000000000000000000000000000000000000000000000000000010000100001111100111000
-00000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000000000000100000000000000010000000000d0000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000020000000000000000000000
-00000000000000000000000000000000000000000000d00000000000000000000000000000000000000000000000000000000000060000000000000000000000
-00000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100
-0000000000000000000000000000000000000000000000000000000000001c100000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000000000000001c7c10001000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000000000000001c7c10000000000000000000000000000000000000000000000000000000000000000
-000000000000000000000000000000000000000000000000000000000001c7c10000000000000000000001000000000000000000000000000000000000000000
-000000000000000000000000000001000000000000000000000000000001c7c1000000000000000000000000000000000000000000000000d000000000000000
-0000000000000000000000000000000000000000000000000000000000001c100000000000000000000000000000000000000000000000000000000000000770
-00000000000000000000000000000000000000000000000000000000000001000100000000000000000000000000000000000000000000000000000000000707
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000606
-00000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000d0d
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000555
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000077
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000700
-00000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000666
-00000000000d0000000000000000000000000000000000d00000000000000000060000000000000000000000000000000000000000000000000000000000000d
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000550
-00000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000100000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000777
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000070
-00000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000060
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000d0
-00000000000000000000000000600000000000000000000000d00000000000000000000000000000000000000000001000000000000000000000000000000050
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000
-00000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d000000000000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-0000000000000000000d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000d00000000000000000000000000000000000000000000100000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-00000d000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000b0
-000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000000000d000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-0000000000000000000000000000000000100000000000000000000000000800080000000000000d0000000000000000000000000000000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000009000f000000000000000000000000000000600000000000000000000000000000b0
-000000000000000000000000000000000000000001000000000000000000a9000a900000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000f9000f900000000000000000000d00000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000a90009900000000000000000000000000000000000000000000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000f995554990000000000000000000000000000000000000000000100000000000000b0
-00000000000000000000000000000000000000000000000000000000000a907c10a90000000000000000000000100000000000000000000000000000000000b0
-00000000000000000000000000000000d0000000000000000000000000a990cd60f99010010000000000000000000000000000000001000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000499d1da940000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000491d19400000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000491119400000000000000000000100000000000000000000060000000000000000b0
-00000000000000000000000000000000000000000000000000000000000055000550000000000000100d000000001000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000aa000aa00000000000000000000000000000000000000010000000000000000000b0
-000000000000006000000000000000000000000000000000000000000008998089980000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000010000000000000000000000880008800000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000200000200000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000b0
-000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000000000000d000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000b0
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000d0000000000000000000000000b0
-0000000000000000000000000000000000000000000000000d0000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000d00000000000000000000000000000000000000000000000000000000000000000d00000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-0000000000000000000000000000000000000d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000010000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d000000000000000000000000000200000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000600000000b0
-00000000000000000000000000000d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000010000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000b0
-0000000000000000000000000000000000000000000000000000000100000000000000d0000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000020000001000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000600000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d00000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000d00000001000000000000000000000000000000000000000000000000000000000000000000000b0
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b0
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-
 __map__
 e6e7f6f7eeefe7f7e7e6f7f7e7cecff7e7f6f7e6fefff6ecedf7f6e7e6dedfe7f7f6cccde7f7f7fcfde7f6eeeff7f7e6e6e7dcddf6e6e6f7f7e6e7feffe7e6e7e7e6f6f7eeefe7e6e7f7e6e7f7f7e6cef7ecedf6fefff7e7e6cef7e7f7eff6e7e7fcfde7f7e7f6f6f7f6f6e7e6cecfe6e7f7f6ecedf7e6f7e6e7e6eee7dedff7
 e6e7f7fcfdf6e7e6e7e6e7f7f7e7f7e6e6f7e7f6cccde6e7eeefe6e7e7efcee7e6e7cecfdcdde7e7feffe7f7e6e6e6e7e6f7dedff7f7f7e7f7e6cccde7e6e6e6f7e6f7e7e6f7eff7e6f7dcddf7f6f7f7e7f7e7f7eee7e6e7e7e7e7e7f7ecede7e7e6f7e7e7e7e6e7cecfe6e7f6fcfde6e6e7f7eff7f7f6f7dedff7eef7e6e6e7

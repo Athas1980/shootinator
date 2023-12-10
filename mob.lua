@@ -2,10 +2,12 @@
 -- move
 -- draw
 -- col
+mobid=0
 function create_mob(s,x,y,w,h)
 	local dx,dy,w,h=0,0,w or 1,h or 1
-
+	mobid +=1
 	local mob={
+		name="[mob:"..mobid.."]",
 		s=s,
 		x=x or 64,
 		y=y or -8,
@@ -25,6 +27,7 @@ function create_mob(s,x,y,w,h)
 	merge(mob,read_assoc("hp=1,escore=100,fra=0,coffx=0,coffy=0,flash=0"))
 	setmetatable(mob,{__index=_ENV,
 	__tostring= function(self)
+		if (self.name ~= nil) return self.name
 		local str=""
 		for k,v in pairs(self) do
 			if str ~="" then 

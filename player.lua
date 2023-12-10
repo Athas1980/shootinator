@@ -1,10 +1,10 @@
 function create_player()
 	sprs=read_kv_arr(
-		"muzx=-1,sx=86,pw=7,f1x=-2,f2x=1,coffx=1|"..
-		"muzx=-1,sx=93,pw=8,f1x=-2,f2x=2,coffx=1|"..
-		"muzx=1,sx=101,pw=11,f1x=-1,f2x=4,coffx=2|"..
-		"muzx=-1,sx=112,pw=8,f1x=-2,f2x=2,coffx=1|"..
-		"muzx=-1,sx=120,pw=7,f1x=-2,f2x=1,coffx=1"
+		"muzx=-1,sx=86,pw=7,f1x=-2,f2x=1,coffx=-1|"..
+		"muzx=-1,sx=93,pw=8,f1x=-2,f2x=2,coffx=-1|"..
+		"muzx=1,sx=101,pw=11,f1x=-1,f2x=4,coffx=-1|"..
+		"muzx=-1,sx=112,pw=8,f1x=-2,f2x=2,coffx=-1|"..
+		"muzx=-1,sx=120,pw=7,f1x=-2,f2x=1,coffx=-1"
 	)
 	local plr=create_mob(1,64,80,2,2)
 	merge(plr,
@@ -14,9 +14,10 @@ function create_player()
 		muzy=-12,
 		sy=0,
 		ph=12,
-		coffy=0,
-		colh=8,
-		soffx=0
+		coffy=2,
+		colh=6,
+		soffx=0,
+		name="player"
 		})
 
 	function plr.upd(_ENV)
@@ -43,6 +44,7 @@ function create_player()
 		local idx=split("1,2,2,3,3,3,4,4,5")
 		merge(_ENV, sprs[idx[mov\3+5]])
 		colw=pw-2*coffx
+		colw=6
 		soffx=-pw/2
 
 		if lives and lives<2 and d<total_dist then
@@ -59,6 +61,12 @@ function create_player()
 		end
 	end
 
+	-- fixme bind directly 
+	function plr.hurt()
+		hurt_player()
+	end
+
+	-- plr.hurt = hurt_player
 
 	function plr.draw(_ENV)
 		local offx=-pw/2
@@ -107,9 +115,11 @@ end
 function create_shield()
 	local sh=create_mob(1,50,100,2,2)
 	sh.pw,sh.ph=17,17
+	sh.name="[shield]"
 	function sh:upd()
 		self.x,self.y=p.x,p.y
 	end
+	function sh:hurt() end
 	function sh:draw()
 		local x,y=self.x-6,self.y-5
 		if invun>0 then
@@ -143,11 +153,11 @@ end
 function create_powerup(_typ, _x,_y)
 	pu=create_mob(_typ+55,_x,_y)
 	pu.typ=_typ
+	pu.colw=16
+	pu.colh=12
 	merge(pu, read_assoc(
 		"pd=12,ph=10,dy=0.25,life=240")
 	)
-	printh("Powerup")
-	printh(pu)
 	
 	function pu.draw(_ENV)
 		if (life<60 and (f/2)%2 == 0)

@@ -22,16 +22,17 @@ function _init()
 	load_lev()
 	min_scroll=-128
 	total_dist=3000 -- temp for demo
+	spawn_distances={} -- just for demo
 	foreach(spawn_distances,list_spawns)
 end
 
 function list_spawns(d)
-	printh(d/8)
+--	printh(d/8)
 	-- foreach(spawn_tab[d], printh)
 end
 
 function load_lev()
-	#include levels.lua
+--	#include levels.lua
 end
 
 -- function reload_sp_and_map()
