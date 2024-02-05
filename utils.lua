@@ -151,3 +151,12 @@ function read_spline(points)
 	--return curves
 	return spl
 end
+
+function easeinoutquart(t)
+	if t<.5 then
+					return 8*t*t*t*t
+	else
+					t-=1
+					return (1-8*t*t*t*t)
+	end
+end

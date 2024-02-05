@@ -4,11 +4,7 @@ __lua__
 --enemy tester
 --wes
 
-
--- printh = function() print(nil/nil) end
-
 function _init()
-	show_collision=true
 	states={
 		game={
 			draw=draw_game,
@@ -141,208 +137,12 @@ function init_game()
 
 end
 
-function add_enemy(e)
+function add_enemy(e,pos)
+	pos = pos or #mobs+1
 	add(enmys,e)
-	add(mobs,e)
+	add(mobs,e,pos)
 end
 
-function mine(x1,y1,x2,y2)
-	local _ENV=create_mob(23,x1,y1)
-	local explosion_radius=16
-	local exploding = false
-	od=draw
-	local 	darken_pal=read_kv_arr(
-		"1=1,2=2,3=3,4=4,5=5,6=5,7=6,8=2,9=9,10=9,11=3,12=13,13=13,14=14,15=15|"..
-		"1=0,2=0,3=1,4=1,5=1,6=5,7=6,8=2,9=4,10=9,11=3,12=13,13=1,14=8,15=6|"..
-		"1=0,2=0,3=1,4=1,5=1,6=1,7=13,8=2,9=4,10=4,11=1,12=13,13=1,14=8,15=13|"..
-		"1=0,2=0,3=0,4=0,5=0,6=1,7=5,8=2,9=5,10=5,11=1,12=13,13=0,14=2,15=13|"..
-		"1=0,2=0,3=0,4=0,5=0,6=0,7=1,8=0,9=1,10=1,11=0,12=0,13=0,14=1,15=1|"
-)
-
-local warn_pal=read_kv_arr("6=14,13=8,5=2|6=7,13=8,5=8")
-	function upd(_ENV)
-		fra +=1
-		if exploding then
-			explosion_radius -=1.3
-		end
-		if explosion_radius <2 then
-			remove(_ENV)
-		end
-		exploding = fra >200
-		if exploding and explosion_radius==16 then 
-			for m in all(mobs) do
-				if m ~= _ENV then
-					local l,t,r,b=unpack(m:col())
-					l,r,t,b=l-x,r-x,t-y,b-y
-					if 
-						l*l+t*t<256 or
-						l*l+b*b<256 or
-						r*r+t*t<256 or
-						r*r+b*b<256 then
-							printh(m)
-							m:hurt(1)
-					end
-				end
-			end
-		end
-
-		wp=nil
-		blinks={100,150,175,185,190,192,194,196,198}
-		for f in all(blinks) do
-
-			if abs(fra-f)<4 then
-				wp=warn_pal[1]
-			end
-			if abs(fra-f)<2 then
-				wp=warn_pal[2]
-			end
-		end
-	end
-	function draw(_ENV)
-		if (wp) then pal(wp) else pal() end
-		if exploding then
-			circfill(x,y,explosion_radius,explosion_radius>6 and 7 or 14)
-			return
-		end
-		if fra%8<4 then 
-			fillp(0b0011001111001100)
-		else 
-			fillp(0b1100111100110011)
-		end
-		if fra>45 then
-			circ(x,y,16,6)
-			local pals={0,2,8,14}
-			pal(8, pals[(fra%32)\8+1])
-		else 
-			pal(darken_pal[#darken_pal-(fra/1.5)\#darken_pal-1])
-		end
-		od(_ENV)
-		if fra>45 then
-			pal()
-			circ(x,y,16,6)
-		end
-		fillp()
-	end
-	return _ENV
-end
-
-function boss(x1,y1,ty1)
-	local _ENV=create_mob(128,x1,y1)
-	--todo extrac specific enemies
-	merge(_ENV, read_assoc(
-		"w=6,h=4,dy=1,sn=1,hp=40,pw=48,ph=32"
-	))
-	sprs=split("128")
-	sp=128
-	ty=ty1
-	exp=0
-	exp2=0
-	function upd(_ENV)
-		fra +=1
-		if exp<9 and fra>190 then exp+=0.125 end
-		if exp2<18 and fra>360 then exp2+=0.5 end
-		
-		flash=max(0, flash-1)
-		-- if fra%8==0 then
-		-- 	sn=sn%3+1
-		-- 	s=sprs[sn]
-		-- end
-		dx=cos(fra/128)/2
-		if y<ty then
-			dy=1
-		else dy=sin(fra/256)/4 end
-
-		if fra%300 == 0 then
-			line_shot(_ENV)
-		end
-	end
-	--od=draw
-	function draw(_ENV)
-		-- palt(15,true)
-		-- palt(0,false)
-		--od(_ENV)
-		
-
-
-		-- sspr(13,64,22,32,x-11,y-15)
-		-- sspr(0,64,12,32,x-21,y-15)
-		-- sspr(35,64,12,32,x+9,y-15)
-
-		--left gun attachment
-
-		spr(142,x-8-exp-(exp2/3),y-12)
-		spr(142,x-8-exp-(2*exp2/3),y-12)
-
-		--right gun attachment
-		spr(142,x+exp+exp2/3,y-12)
-		spr(142,x+exp+2*exp2/3,y-12)
-
-		--left gun
-		sspr(0,64,12,32,x-12-exp-exp2,y-15)
-
-		--right gun
-		sspr(35,64,12,32,x+exp+exp2,y-15)
-		
-		sspr(0,64,12,32,x-12-exp,y-15)
-		sspr(35,64,12,32,x+exp,y-15)
-		sspr(13,64,22,32,x-11,y-15)
-
-
-
-
-		if ((fra\30)%4==0) then
-			spr(134, x-8,y-8,2,2)
-		end
-		if ((fra\30)%4==1) then
-			spr(166, x-8,y-8,2,2)
-		end
-		if ((fra\30)%4==2) then
-			spr(134, x-8,y-8,2,2)
-		end
-		palt()
-	end
-	return _ENV
-end
-
-function line_shot(e)
-	sfx(58,3)
-	local _ENV=create_mob(86,e.x,e.y+12)
-	f=-5;
-	e.flash=20;
-	function upd(_ENV)
-		f+=1
-		flash=(f%21)\7
-		if (f>0) then
-				_ENV.dy=min(f/15,1.5)
-		else 
-			x=e.x
-		end
-		if y>130 then
-			remove(_ENV)
-		end
-	end
-	function draw(_ENV)
-		line(x-5,y,x+5,y, 11)
-		line(x-8,y-1,x-6,y-1, 11)
-		line(x+6,y-1,x+8,y-1,11)
-		for oy=1,5 do 
-			for i=-8,8 do
-				ly=y-oy 
-				if abs(i)>5 then
-					ly -= 1
-				end
-				local cindex = rnd(5)\1+2-oy
-				local c=3
-				if cindex >= 4 then c=11 end
-				if cindex >2 then 
-					pset(x+i,ly,c)
-				end
-			end
-		end
-	end
-	add(ebuls, _ENV)
-	add(mobs, _ENV)
-end
 
 function init_scene(number)
 	distance_spawns={}
@@ -351,23 +151,23 @@ function init_scene(number)
 		remove(e)
 	end
 	if scene==1 then
-		msg="scene 1 - flaps in a row"
-		add_enemy(flap(16,48,2))
-		add_enemy(flap(32,48,2))
-		add_enemy(flap(64,48,2))
-		add_enemy(flap(112,48,2))
-		create_powerup(1, 16,64)
-		create_powerup(2, 32,64)
-		create_powerup(3, 96,64)
-		create_powerup(4, 120,64)
+		-- msg="scene 1 - flaps in a row"
+		-- add_enemy(flap(16,48,2))
+		-- add_enemy(flap(32,48,2))
+		-- add_enemy(flap(64,48,2))
+		-- add_enemy(flap(112,48,2))
+		-- create_powerup(1, 16,64)
+		-- create_powerup(2, 32,64)
+		-- create_powerup(3, 96,64)
+		-- create_powerup(4, 120,64)
 
 	end
 
 	if scene==2 then
-		msg="scene 2 - flaps in a col"
-		add_enemy(flap(16,16,2))
-		add_enemy(flap(64,32,2))
-		add_enemy(flap(96,56,2))
+		-- msg="scene 2 - flaps in a col"
+		-- add_enemy(flap(16,16,2))
+		-- add_enemy(flap(64,32,2))
+		-- add_enemy(flap(96,56,2))
 	end
 
 	if scene==3 then
@@ -426,11 +226,11 @@ function init_scene(number)
 
 	if scene==8 then 
 		msg="8 boss?"
-		add_enemy( boss(64,-32,32))
-		add_enemy(mine(82,84))
-		add_enemy(mine(120,120))
-		add_enemy(mine(120,96))
-		add_enemy(mine(20,96))
+		add_enemy( boss(64,-32,24))
+		-- add_enemy(mine(82,84))
+		-- add_enemy(mine(120,120))
+		-- add_enemy(mine(120,96))
+		-- add_enemy(mine(20,96))
 	end
 
 	if scene==9 then
@@ -548,9 +348,10 @@ end
 
 function create_pbul(x,y,dx)
 	dx=dx or 0
-	local bul=create_mob(17,x,y)
+	local bul=create_mob(24,x,y)
 	bul.pow=1
-	bul.dy=-2
+	bul.dy=-3.2
+	bul.h=2
 	bul.fra=rnd(27)\1
 	function bul:upd()
 		self.x +=dx
@@ -582,16 +383,16 @@ function create_pbul(x,y,dx)
 	add(buls,bul)
 end
 
-function create_pbulc(x,y)
-	local imp=create_mob(5,x,y)
-	function imp:upd()
-		self.s=self.fra+5
-		if self.s>8 then
-			remove(self)
+function create_pbulc(_x,_y)
+	local _ENV=create_mob(5,_x,_y)
+	function upd()
+		s=fra+5
+		if s>8 then
+			remove(_ENV)
 		end
-		self.fra+=1
+		fra+=1
 	end
-	return imp
+	return _ENV
 end
 
 function create_muz(x,y) 
@@ -605,74 +406,37 @@ function create_muz(x,y)
 			offx=x-p.x,
 			offy=y-p.y
 		})
+	local _ENV=muz
 	
-	function muz:upd()
-		local mf=self.mf+1
-		local f=mf\2
-		if f>3 then
-			remove(self)
+	function upd(_ENV)
+		mf+=1
+		f=mf\2
+		if f>2 then
+			remove(_ENV)
 		end
-		muz.mf,muz.f=mf,f
 	end
 	
-	function muz:draw()
-		local f=self.mf
-		local x=p.x+self.offx-self.pw/2
-		local y=p.y+self.offy-self.ph/2
-		--fixme compress
-		if f==0 then
-			pal(10,7) --yellow>w
-			pal(9,7) --orange>w
-			pal(8,7) --red>w
-			pal(2,7) --dred>w
-			spr(16,x,y,1,1,false,true)
-		end
-		if f==1 then
-			pal(10,7) --yellow>w
-			pal(9,7) --orange>w
-			pal(8,7) --red>w
-			pal(2,12) --dred>b
-			spr(16,x,y,1,1,false,true)
-			spr(16,x,y+8,1,1)
-		end
-		if f==2 then
-			pal(10,7) --yellow>w
-			pal(9,7) --orange>w
-			pal(8,12) --red>b
-			pal(2,13) --dred>b
-			spr(16,x,y,1,1,false,true)
-			spr(16,x,y+8,1,1,false,false)
-		end
-		if f==3 then
-			pal(10,7) --yellow>w
-			pal(9,12) --orange>b
-			pal(8,13) --red>bg
-			pal(2,1) --dred>db
-			spr(16,x,y,1,1,false,true)
-			spr(16,x,y+8,1,1,false,false)
-		end
-		if f==4 then
-			pal(10,7) --yellow>w
-			pal(9,12) --orange>b
-			pal(8,13) --red>bg
-			pal(2,1) --dred>db
-			spr(34,x+1,y,1,1,false,true)
-			spr(34,x+1,y+8,1,1,false,false)
-		end
-		if f==5 then
-			pal(10,7) --yellow>w
-			pal(9,12) --orange>b
-			pal(8,13) --red>bg
-			pal(2,1) --dred>db
-			spr(34,x+1,y,1,1,false,true)
-			spr(34,x+1,y+8,1,1,false,false)
-		end
+	function draw()
+		local x=p.x+offx-pw/2
+		local y=p.y+offy-ph/2
+
+		local muz_pal=read_kv_arr[[
+			10=7,9=7,8=7,2=12|
+			10=7,9=7,8=12,2=13|
+			10=7,9=12,8=13,2=1|
+			10=7,9=12,8=13,2=1|
+			10=7,9=12,8=13,2=1
+		]]
+
+		pal(muz_pal[mf])
+		local sp=f<4 and 16 or 34
+			spr(sp,x+1,y,1,1,false,true)
+			spr(sp,x+1,y+8,1,1,false,false)
 		
 		pal()
 	end
 	add(mobs,muz)
 end
-
 
 
 function _update60()
@@ -718,7 +482,7 @@ function input()
 	end
 	if btn(❎) and p.stime<=0 then
 		sfx(63)
-		p.stime=13
+		p.stime=12
 		if rapid>0 then 
 			p.stime=6
 		end
@@ -751,7 +515,8 @@ function draw_game()
 	cls(0)
 	print("press z to change scene",0,0,7)
 	print(msg)
-	print("mobs:" ..#mobs)
+	print("mobs: " ..#mobs)
+	print("lives: " .. lives)
 
 
 	draw_stars()
@@ -824,10 +589,7 @@ end
 
 --redefine sgn so sgn(0)=0
 function sgn(n)
-	if n==0 then
-		return 0
-	end
-	return n/abs(n)
+	return n==0 and 0 or n/abs(n)
 end
 
 function create_stars()
@@ -1206,6 +968,309 @@ function create_ppart(
 		end
 	}
 end
+-->8
+function mine(x1,y1,x2,y2)
+	local _ENV=create_mob(23,x1,y1)
+	local explosion_radius=16
+	local exploding = false
+	od=draw
+	local 	darken_pal=read_kv_arr(
+		"1=1,2=2,3=3,4=4,5=5,6=5,7=6,8=2,9=9,10=9,11=3,12=13,13=13,14=14,15=15|"..
+		"1=0,2=0,3=1,4=1,5=1,6=5,7=6,8=2,9=4,10=9,11=3,12=13,13=1,14=8,15=6|"..
+		"1=0,2=0,3=1,4=1,5=1,6=1,7=13,8=2,9=4,10=4,11=1,12=13,13=1,14=8,15=13|"..
+		"1=0,2=0,3=0,4=0,5=0,6=1,7=5,8=2,9=5,10=5,11=1,12=13,13=0,14=2,15=13|"..
+		"1=0,2=0,3=0,4=0,5=0,6=0,7=1,8=0,9=1,10=1,11=0,12=0,13=0,14=1,15=1|"
+)
+
+local warn_pal=read_kv_arr("6=14,13=8,5=2|6=7,13=8,5=8")
+	function upd(_ENV)
+		fra +=1
+		if exploding then
+			explosion_radius -=1.3
+		end
+		if explosion_radius <2 then
+			remove(_ENV)
+		end
+		exploding = fra >200
+		if exploding and explosion_radius==16 then 
+			for m in all(mobs) do
+				if m ~= _ENV then
+					local l,t,r,b=unpack(m:col())
+					l,r,t,b=l-x,r-x,t-y,b-y
+					if 
+						l*l+t*t<256 or
+						l*l+b*b<256 or
+						r*r+t*t<256 or
+						r*r+b*b<256 then
+							m:hurt(1)
+					end
+				end
+			end
+		end
+
+		wp=nil
+		for f in all(split"100,150,175,185,190,192,194,196,198") do
+
+			if abs(fra-f)<4 then
+				wp=warn_pal[1]
+			end
+			if abs(fra-f)<2 then
+				wp=warn_pal[2]
+			end
+		end
+	end
+	function draw(_ENV)
+		pal(wp)
+		--if (wp) then pal(wp) else pal() end
+		if exploding then
+			circfill(x,y,explosion_radius,explosion_radius>6 and 7 or 14)
+			return
+		end
+		if fra%8<4 then 
+			fillp(0b0011001111001100)
+		else 
+			fillp(0b1100111100110011)
+		end
+		if fra>45 then
+			circ(x,y,16,6)
+			pal(8, split"0,2,8,14"[(fra%32)\8+1])
+		else 
+			pal(darken_pal[#darken_pal-(fra/1.5)\#darken_pal-1])
+		end
+		od(_ENV)
+		fillp()
+	end
+	return _ENV
+end
+
+function boss()
+	local _ENV=create_mob(128,64,-32)
+	--todo extrac specific enemies
+	merge(_ENV, read_assoc(
+		"w=6,h=4,dy=1,sn=1,hp=200,pw=48,ph=32"
+	))
+	sp=128
+	exp=0
+	exp2=0
+	pw=20
+	cnt = 0
+	phase=1
+	maxshots=0
+	tar_swing_x=64
+	sc =0
+	hist={}
+	
+
+	function upd(_ENV)
+		--[[
+			closed
+			partially opened
+			opened
+			wings partially opened
+			wings opened.
+		]]
+		fra +=1
+		rage=4-hp/50
+		if hp==150 then phase=2 end
+		if hp==100 then 
+			boss_attach(_ENV,-1)
+			boss_attach(_ENV,1)
+			hp=99
+			phase=3
+		end
+		if phase>1 then exp=min(exp+0.125,9) maxshots=4 end
+		-- if exp<9 and fra>190 then exp+=0.125 end
+		if phase>2 then exp2=min(exp2+0.5,18) maxshots=10 end
+		-- if exp2<18 and fra>360 then exp2+=0.5 end
+		pw = 20 + exp + exp
+		flash=max(0, flash-1)
+		-- if fra%8==0 then
+		-- 	sn=sn%3+11-2
+		-- 	s=sprs[sn]
+		-- end
+		dx=cos(fra/128)/2
+		if y<24 then
+			dy=1
+		else swinging=true end
+
+		if(swinging and not spline) then 
+			tar_swing_x=0
+			while tar_swing_x==0 or x+tar_swing_x<24 or x+tar_swing_x>96 do 
+				tar_swing_x=(rnd(17)\1-8)*8
+			end
+			tar_swing_y=(rnd(5)\1-2)*16
+			if y<32 then tar_swing_y =16 end
+
+			-- tar_swing_x += x
+			-- tar_swing_y += y
+			-- tar_swing_x = x-8
+			-- tar_swing_y=y				printh(sc .. " x:" ..spline(sc).x.." y:" ..spline(sc).y)max
+
+			if y<32 then tar_swing_y =16 end
+			if y>64 then tar_swing_y =-48 end
+			if phase==3 then tar_swing_y=32-y end
+
+			-- tar_swing_x=0
+			-- tar_swing_y=0
+			local spl_dat={x,y,
+			x+0.5*tar_swing_x,min(y, y+tar_swing_y)-8,
+			x+0.5*tar_swing_x,min(y, y+tar_swing_y)-8,
+			x+tar_swing_x,y+tar_swing_y}
+			spline=read_spline(spl_dat)
+		else if spline then 
+			sc=sc+1/64
+
+			if sc<1 then 
+				dx=0
+				dy=0
+				merge(_ENV, spline(sc))
+			else
+				if (maxshots ==0) line_shot(_ENV,rage)
+				sc=0 
+				spline=nil
+			end
+		end
+		end
+
+		if fra%120 == 0 and phase==2 then
+			for i = 1,5 do
+			add_enemy(mine(rnd(128),rnd(128)))
+			end
+		end
+
+		if fra%143 == 0 and maxshots == 0 then
+			line_shot(_ENV,rage)
+		end
+
+		if (fra%100==0 or fra%50==10 or fra%100==20) then
+			if (maxshots > 0) then
+				create_aim_ebul(_ENV,cnt+1)
+				cnt = cnt%maxshots+1
+			end
+		end
+		hist[fra%20]={x,y}
+	end
+	--od=draw300
+	function draw(_ENV)
+		
+		
+		if flash>0 then
+			pal(lightenpal[1])
+		end
+		if flash>2 then
+			pal(lightenpal[2])
+		end
+		sspr(0,64,12,32,x-12-exp,y-15)
+		sspr(35,64,12,32,x+exp,y-15)
+		sspr(13,64,22,32,x-11,y-15)
+		spr(split"134,166,134,146"[fra\30%4+1],x-8,y-8,2,2)
+		pal()
+		palt()
+		draw_collision(_ENV)
+	end
+	return _ENV
+end
+
+function boss_attach(boss,side)
+	-- -1 left 1 right
+	local _ENV = create_mob(128,0,0,1.5,4)
+	ox,exp,ht=-3,0,{0,0}
+	ang=0.75
+	prefiring=false
+	firing=false
+	rot_spd =0
+	countdown=120
+	max_countdown=120
+	if side==1 then
+		s=132.375
+		ox=27
+	end
+
+	hp=50
+	od=draw
+	function draw()
+		lazershot(_ENV)
+		for i=0,1,0.3333 do
+			spr(142, lerp(boss.x+0.5*boss.pw*side,x,i)-4, lerp(boss.y,y,i)-12)
+		end
+		od(_ENV)
+
+		-- spr(143,lerp(boss.x+boss.pw*side*0.5,x-pw*side,0.3),lerp(boss.y,y,0.3)-12)
+		-- spr(143,lerp(boss.x+boss.pw*side*0.5,x,0.6)+4*side*0.6,lerp(boss.y,y,0.6)-12)
+	end
+
+	function upd(_ENV)
+
+		--Fixme de duplicate
+		flash=max(0, flash-1)
+		
+		countdown=(countdown-1)%max_countdown
+		prefiring= countdown<80
+		if countdown==80 then
+			sfx(54)
+		end
+		if countdown<50 and countdown>20 then
+			prefiring=false
+			firing=true
+		else firing =false
+		end
+		
+		local h=boss.hist[(boss.fra-10)%20]
+		ht=h
+		local tx,ty=h[1],h[2]
+
+		exp=min(exp+0.5,18)
+
+		flash=max(0, flash-1)
+		x=h[1]+side*(pw*-0.5+boss.pw*0.5+exp)
+		y=h[2]
+	end
+
+	add_enemy(_ENV,1)
+end
+
+--8118
+function line_shot(e,rage)
+	sfx(58,3)
+	local _ENV=create_mob(86,e.x,e.y+12)
+	pw,ph,f=10,2,5
+	function upd(_ENV)
+		f+=1
+		pw +=rage
+		if (f>0) then
+				_ENV.dy=min(f/15,1.5)
+		else 
+			x=e.x
+		end
+		if y>130 then
+			remove(_ENV)
+		end
+	end
+	function draw(_ENV)
+		line(x-0.375*pw,y,x+0.375*pw,y,11)
+		-- line(x-16,y,x+16,y, 11)
+		line(x-0.5*pw,y-1,x-0.375*pw,y-1,11)
+		line(x+0.375*pw,y-1,x+0.5*pw,y-1,11)
+		for oy=1,8 do 
+			for i=-0.5*pw,0.5*pw do
+				ly=y-oy 
+				if abs(i)>5 then
+					ly -= 1
+				end
+				local cindex = rnd(5)\1+2-oy
+				local c=3
+				if cindex >= 4 then c=11 end
+				if cindex >2 then 
+					pset(x+i,ly,c)
+				end
+			end
+		end	draw_collision(_ENV)
+
+	end
+	add(ebuls, _ENV)
+	add(mobs, _ENV)
+end
+
 __gfx__
 00008e700e0e0000020200000000006c76600000dc777ccddc777ccd1dc7cdd10111111008008000000000008080000800800000800080000080080000808000
 1dc09a70e8e880002020200000006c7707000000ddc7cddddcc7ccdd1cc7cc1101c7c1000900900000000000f0f0000f00f000009000f00000f00f0000f0f000
@@ -1215,22 +1280,22 @@ __gfx__
 5d70d670000000000000000006cc000000000000000d0000000000000000000000000000091190000000000995a9009955a900f99555499009955a900995a900
 6770ef700000000000000000c7000000000000000000000000000000000000000000000005005000000000097ca940997ca990a907c10a90a99c7990a99c7900
 7770f77000000000000000006cc00000000000000000000000000000000000000000000000000000000000accda94a9ccda99a990cd60f99a99dcd90a99dcc40
-089a7a980001000000000000c7000000050000000000000000000000007776000000000000000000000000acd1a9409cd1a990499d1da940a991dc99a991dc40
-089a7a98001d100000000000607000005750000000000000000000000776666000000000000000000000000ddd99009ddd99000491d19400099d1c90099ddd00
-089a7a9801dcd100000000006c6000005775000000000000000000007762266600000000000000000000000911940049119400049111940004911a4004911900
-0289a98201dcd10000000000000000005777500000000000000000007628826d0000000000000000000000055055005500550005500055000550055005505500
-0028982001dcd1000000000000000000577775000000000000000000762882d50000000000000000000000000000000000000000000000000000000000000000
-0002820001dcd1000000000000000000577550000000000000000000666225550000000000000000000000000000000000000000000000000000000000000000
-00002000001d100000000000000000000550000000000000000000000666d5500000000000000000000000000000000000000000000000000000000000000000
-00000000000100000000000000000000000000000000000000000000006d55000000000000000000000000000000000000000000000000000000000000000000
-00000000000aa000009a900067777665000000000000000000000000000000000000000000000000000000000000000000000000000cc111000e000e00000000
-0000000000899800089a980067777665000000000000000000000000000000000000000000000000000000000000000000000000007d1551100e000e00000000
-0000000000088000089a98000677665000000000000000000000000000000000000000000000000000000000000000000000000007d11155110e000e00000000
-00008000000200000289820006776650000000000000000000000000000000000000000000000000000000000000000000000000cd11ddd15d1e000e00000000
-0000f000000000000028200006776650000000000000000000000000000000000000000000000000000000000000000000000000c11dcccd511e000e00000000
-000aa900000000000002000006776650000000000080000000000808000000000000000000000000000000000000000000000000155dc7cd511e000e00000000
-000ff9000000000000000000067766500000000000f000000000090f000000000000000000000000000000000000000000000000511dcccd551e000e00000000
-00049400000000000000000006776650008000000aa900000000a90a0000000000000000000000000000000000000000000000001d11ddd1d15e000e00000000
+089a7a980001000000000000c7000000050000000000000000000000007776000001000000000000000000acd1a9409cd1a990499d1da940a991dc99a991dc40
+089a7a98001d1000000000006070000057500000000000000000000007766660001d1000000000000000000ddd99009ddd99000491d19400099d1c90099ddd00
+089a7a9801dcd100000000006c60000057750000000000000000000077622666001c1000000000000000000911940049119400049111940004911a4004911900
+0289a98201dcd10000000000000000005777500000000000000000007628826d001c100000000000000000055055005500550005500055000550055005505500
+0028982001dcd1000000000000000000577775000000000000000000762882d5001c100000000000000000000000000000000000000000000000000000000000
+0002820001dcd100000000000000000057755000000000000000000066622555001c100000000000000000000000000000000000000000000000000000000000
+00002000001d100000000000000000000550000000000000000000000666d55001dcd10000000000000000000000000000000000000000000000000000000000
+00000000000100000000000000000000000000000000000000000000006d550001dcd10000000000000000000000000000000000000000000000000000000000
+00000000000aa000009a9000677776650000000000000000000000000000000001dcd10000000000000000000000000000000000000cc111000e000e00000000
+0000000000899800089a9800677776650000000000000000000000000000000001dcd10000000000000000000000000000000000007d1551100e000e00000000
+0000000000088000089a9800067766500000000000000000000000000000000001dcd1000000000000000000000000000000000007d11155110e000e00000000
+00008000000200000289820006776650000000000000000000000000000000001ddcdd1000000000000000000000000000000000cd11ddd15d1e000e00000000
+0000f000000000000028200006776650000000000000000000000000000000001ddcdd1000000000000000000000000000000000c11dcccd511e000e00000000
+000aa9000000000000020000067766500000000000800000000008080000000001dcd10000000000000000000000000000000000155dc7cd511e000e00000000
+000ff9000000000000000000067766500000000000f000000000090f00000000001d100000000000000000000000000000000000511dcccd551e000e00000000
+00049400000000000000000006776650008000000aa900000000a90a0000000000010000000000000000000000000000000000001d11ddd1d15e000e00000000
 0000000000000000000000000677665000f000000ff900000000f90f900000000000000000000000007c67000000c0000000000005551511d10e000e00000000
 000000001100000000000000067766500aa900000a9900000000a90990000000000000000000000007c700c0000c7c000000000000111551100e000e00000000
 000000002200000000000000067766500ff90000f9499000000f99549900000008000000000c00006c700767000c7c00000000000001d111000e000e00000000

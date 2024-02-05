@@ -53,8 +53,9 @@ function def_draw(_ENV)
 		if flash>2 then
 			pal(lightenpal[2])
 		end
-		spr(s,x-pw/2,y-ph/2,w,h)
-			pal()
+		--spr(s,x-pw/2,y-ph/2,w,h)
+		sspr((s%16)*8,(s\16)*8,w*8,h*8,x-pw/2,y-ph/2)
+		pal()
 		draw_collision(_ENV)
 end
 

@@ -229,36 +229,8 @@ function green(x1, ty1)
 		end
 	end
 
-
 	return _ENV
 end
-
--- function launcher()
--- 	local e=create_mob(131,128,64,3,2)
--- 	e.hp=10
--- 	olddraw=e.draw
--- 	function e:upd()
--- 		self.fra +=1
--- 		self.flash=max(0, self.flash-1)
--- 	end
--- 	function e:draw()
--- 			palt(0,false)
--- 			palt(14,true)
--- 			olddraw(self)
-
--- 			local bulpos=116-f%136
--- 			spr(75,bulpos,self.y-4,2,1)
--- 			spr(91,bulpos+16,self.y-5)
--- 			palt(14,true)
--- 			palt(0,true)
--- 			clip(self.x-self.pw/2+5,0,128,128)
--- 			olddraw(self)
--- 			palt()
--- 			pal()
--- 			clip()
--- 	end
--- 	return e
--- end
 
 function skull()
 	local e=create_mob(71,64,32,2,2)
@@ -300,11 +272,11 @@ function lazer(_x,_y,tx,ty)
 		ang%=1
 		
 		countdown=(countdown-1)%max_countdown
-		prefiring= countdown<60
-		if countdown==60 then
+		prefiring= countdown<80
+		if countdown==80 then
 			sfx(54)
 		end
-		if countdown<30 then
+		if countdown<50 and countdown>20 then
 			prefiring=false
 			firing=true
 		else firing =false
@@ -313,61 +285,7 @@ function lazer(_x,_y,tx,ty)
 
 	function draw(_ENV)
 
-		if flash>0 then
-			pal(lightenpal[1])
-		end
-		if flash>2 then
-			pal(lightenpal[2])
-		end
-
-		local ca,sa= cos(ang), sin(ang)
-		local xoff,yoff= ca*200, sa*200
-		if (prefiring) then
-			--rectfill(0,0,128,128,1)
-			
-			fillp(abs(xoff)>abs(yoff) and ▥ or ▤)
-			if (countdown<40) fillp()
-			line(x,y,x+xoff, y+yoff,countdown<45 and 8 or 2 )
-			fillp()
-		end
-
-		if (firing) then
-			local cx,cy=0,0
-			if abs(xoff)>abs(yoff) then
-				cy=1
-			else
-				cx=1
-			end
-
-			local c=9
-			line(x,y,x,y,0)
-			
-			for i=0, 200 do
-				local v=(i/10 - t()*7)%1
-				local partx,party= i, cos(v)*4
-				partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
-				line(partx,party, 2)
-			end
-
-			line(x-cx,y-cy,x-cx+xoff,y-cy+yoff,14)
-			line(x+cx,y+cy,x+cx+xoff,y+cy+yoff,14)
-			line(x,y, x+xoff,y+yoff,7)
-			if line_rect_isect(
-				x,y,x+xoff,y+yoff,
-				unpack(p:col())) then
-					hurt_player()
-			end
-
-			for i=0, 128, 0.5 do
-				local v=(i/10 - t()*7)%1
-				local c=9
-				if (v>0.45) then
-					local partx,party= i, cos(v)*4
-					partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
-					pset(partx, party, 8)
-				end
-			end
-		end
+		lazershot(_ENV)
 		
 		circfill(x+cos(ang)*4, y+sin(ang)*4,3,1)
 		sspr(104,16,11,11,x-5,y-5)
@@ -378,6 +296,63 @@ function lazer(_x,_y,tx,ty)
 	end
 
 	return _ENV
+end
+function lazershot(_ENV)
+	if flash>0 then
+		pal(lightenpal[1])
+	end
+	if flash>2 then
+		pal(lightenpal[2])
+	end
+
+	local ca,sa= cos(ang), sin(ang)
+	local xoff,yoff= ca*200, sa*200
+	if (prefiring) then
+		--rectfill(0,0,128,128,1)
+		
+		fillp(abs(xoff)>abs(yoff) and ▥ or ▤)
+		if (countdown<40 and countdown>10) fillp()
+		line(x,y,x+xoff, y+yoff,8)
+		fillp()
+	end
+
+	if (firing) then
+		local cx,cy=0,0
+		if abs(xoff)>abs(yoff) then
+			cy=1
+		else
+			cx=1
+		end
+
+		local c=9
+		line(x,y,x,y,0)
+		
+		for i=0, 200 do
+			local v=(i/10 - t()*7)%1
+			local partx,party= i, cos(v)*4
+			partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
+			line(partx,party, 2)
+		end
+
+		line(x-cx,y-cy,x-cx+xoff,y-cy+yoff,14)
+		line(x+cx,y+cy,x+cx+xoff,y+cy+yoff,14)
+		line(x,y, x+xoff,y+yoff,7)
+		if line_rect_isect(
+			x,y,x+xoff,y+yoff,
+			unpack(p:col())) then
+				hurt_player()
+		end
+
+		for i=0, 128, 0.5 do
+			local v=(i/10 - t()*7)%1
+			local c=9
+			if (v>0.45) then
+				local partx,party= i, cos(v)*4
+				partx,party= ca*partx-sa*party+x, sa*partx +ca*party+y
+				pset(partx, party, 8)
+			end
+		end
+	end
 end
 
 function lerp(v,tv,t)
@@ -434,18 +409,16 @@ function create_lazer_ebul(e)
 	add(mobs, _ENV)
 end
 
-function create_aim_ebul(e)
-	sfx(58,3)
-	local _ENV=create_mob(64,e.x,e.y+8)
+function ang_shot(_x,_y,ang)
+	local _ENV=create_mob(64,_x,_y)
 	colw=2
 	colh=2
 	sprs = {64,80}
 	f=-5;
-	e.flash=5;
+
 	sn=0
-	
-	local ang = atan2(p.x-e.x, p.y-e.y)
-	dx,dy=cos(ang)*1.5,sin(ang)*1.5
+
+	dx,dy=cos(ang)*1.2,sin(ang)*1.2
 	function upd(_ENV)
 		f+=1
 
@@ -457,13 +430,23 @@ function create_aim_ebul(e)
 
 		-- sp=fra
 		-- FIXME need a more
-		-- omprehensive out of bounds
+		-- comprehensive out of bounds
 		if y>130 then
 			remove(_ENV)
 		end
 	end
 	add(ebuls, _ENV)
 	add(mobs, _ENV)
+end
+
+function create_aim_ebul(e,n)
+	sfx(58,3)
+	n = n or 1
+	local ang = atan2(p.x-e.x, p.y-e.y)
+	for i=1,n do
+		ang_shot(e.x,e.y, ang+(i-.5-n/2)*0.04)
+	end
+	--e.flash = 5
 end
 
 function spinshot(mob)

@@ -12,9 +12,9 @@ end
 
 local distance_spawn={}
 spawn_tab={}
--- local next=level_iter(l1st,
---  l1end)
-local next=level_iter(l1end+3,l2end)
+local next=level_iter(l1st,
+ l1end)
+--local next=level_iter(l1end+3,l2end)
 
 function nybles(byte)
 		return (byte&0xf0)>>>4,
