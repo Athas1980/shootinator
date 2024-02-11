@@ -484,7 +484,7 @@ function draw_game()
 
 	draw_stars()
 	draw_pparts()
-	stripe("d\ns\n\t",125,30,
+	stripe("d\ns\nt",125,30,
 	split("7,7,6,13,5,7,7,7,6,13,5,7,7,7,6,13,5,7"))
 
 	clip()
