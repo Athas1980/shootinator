@@ -134,7 +134,6 @@ function init_game()
 
 	distance_spawns={}
 	init_scene(scene)
-
 end
 
 function add_enemy(e,pos)
@@ -228,6 +227,8 @@ function init_scene(number)
 		msg="8 boss?"
 		add_enemy( boss(64,-32,24))
 		-- add_enemy(mine(82,84))
+		-- add_enemy(mine(62,84,1))
+		-- add_enemy(mine(42,84,2))
 		-- add_enemy(mine(120,120))
 		-- add_enemy(mine(120,96))
 		-- add_enemy(mine(20,96))
@@ -574,7 +575,9 @@ function read_assoc(str)
 		for kv in all(kvs) do
 			local k,v=unpack(
 				split(kv,"="))
+				v= v=="{}" and {} or v
 			tab[k]=v
+			printh("k:"..k)
 		end
 	return tab
 end
@@ -969,20 +972,25 @@ function create_ppart(
 	}
 end
 -->8
-function mine(x1,y1,x2,y2)
+
+-- find tokens here on
+
+function mine(x1,y1)
 	local _ENV=create_mob(23,x1,y1)
 	local explosion_radius=16
 	local exploding = false
 	od=draw
-	local 	darken_pal=read_kv_arr(
-		"1=1,2=2,3=3,4=4,5=5,6=5,7=6,8=2,9=9,10=9,11=3,12=13,13=13,14=14,15=15|"..
-		"1=0,2=0,3=1,4=1,5=1,6=5,7=6,8=2,9=4,10=9,11=3,12=13,13=1,14=8,15=6|"..
-		"1=0,2=0,3=1,4=1,5=1,6=1,7=13,8=2,9=4,10=4,11=1,12=13,13=1,14=8,15=13|"..
-		"1=0,2=0,3=0,4=0,5=0,6=1,7=5,8=2,9=5,10=5,11=1,12=13,13=0,14=2,15=13|"..
-		"1=0,2=0,3=0,4=0,5=0,6=0,7=1,8=0,9=1,10=1,11=0,12=0,13=0,14=1,15=1|"
-)
+	local 	darken_pal=read_kv_arr[[
+		1=1,2=2,3=3,4=4,5=5,6=5,7=6,8=2,9=9,10=9,11=3,12=13,13=13,14=14,15=15|
+		1=0,2=0,3=1,4=1,5=1,6=5,7=6,8=2,9=4,10=9,11=3,12=13,13=1,14=8,15=6|
+		1=0,2=0,3=1,4=1,5=1,6=1,7=13,8=2,9=4,10=4,11=1,12=13,13=1,14=8,15=13|
+		1=0,2=0,3=0,4=0,5=0,6=1,7=5,8=2,9=5,10=5,11=1,12=13,13=0,14=2,15=13|
+		1=0,2=0,3=0,4=0,5=0,6=0,7=1,8=0,9=1,10=1,11=0,12=0,13=0,14=1,15=1|
+		]]
 
 local warn_pal=read_kv_arr("6=14,13=8,5=2|6=7,13=8,5=8")
+-- warn_pal=read_kv_arr("6=3,13=3,5=3|6=14,13=8,5=2")
+
 	function upd(_ENV)
 		fra +=1
 		if exploding then
@@ -997,12 +1005,16 @@ local warn_pal=read_kv_arr("6=14,13=8,5=2|6=7,13=8,5=8")
 				if m ~= _ENV then
 					local l,t,r,b=unpack(m:col())
 					l,r,t,b=l-x,r-x,t-y,b-y
-					if 
-						l*l+t*t<256 or
-						l*l+b*b<256 or
-						r*r+t*t<256 or
-						r*r+b*b<256 then
-							m:hurt(1)
+	
+
+					function sum_sqr_lt_256(a,b)
+						return a*a+b*b<256
+					end
+					if sum_sqr_lt_256(l,t) or
+					sum_sqr_lt_256(l,b) or 
+					sum_sqr_lt_256(r,t) or 
+					sum_sqr_lt_256(r,b) then
+						m:hurt(1)
 					end
 				end
 			end
@@ -1010,13 +1022,8 @@ local warn_pal=read_kv_arr("6=14,13=8,5=2|6=7,13=8,5=8")
 
 		wp=nil
 		for f in all(split"100,150,175,185,190,192,194,196,198") do
-
-			if abs(fra-f)<4 then
-				wp=warn_pal[1]
-			end
-			if abs(fra-f)<2 then
-				wp=warn_pal[2]
-			end
+			wp=wp or warn_pal[
+				abs((fra-f)\5) +1]
 		end
 	end
 	function draw(_ENV)
@@ -1026,16 +1033,26 @@ local warn_pal=read_kv_arr("6=14,13=8,5=2|6=7,13=8,5=8")
 			circfill(x,y,explosion_radius,explosion_radius>6 and 7 or 14)
 			return
 		end
+
+		--[[
+			saves 3 tokens
+			convert this if statement to a single line
+
 		if fra%8<4 then 
 			fillp(0b0011001111001100)
 		else 
 			fillp(0b1100111100110011)
 		end
+		]]
+		fillp(fra%8<4 and 0b0011001111001100 or 0b1100111100110011)
+
 		if fra>45 then
 			circ(x,y,16,6)
-			pal(8, split"0,2,8,14"[(fra%32)\8+1])
+			pal(8, split"0,2,8,14"
+			[(fra%32)\8+1])
 		else 
-			pal(darken_pal[#darken_pal-(fra/1.5)\#darken_pal-1])
+			pal(darken_pal[
+				#darken_pal-(fra/1.5)\#darken_pal-1])
 		end
 		od(_ENV)
 		fillp()
@@ -1046,19 +1063,25 @@ end
 function boss()
 	local _ENV=create_mob(128,64,-32)
 	--todo extrac specific enemies
-	merge(_ENV, read_assoc(
-		"w=6,h=4,dy=1,sn=1,hp=200,pw=48,ph=32"
-	))
-	sp=128
-	exp=0
-	exp2=0
-	pw=20
-	cnt = 0
-	phase=1
-	maxshots=0
-	tar_swing_x=64
-	sc =0
+	merge(_ENV, read_assoc[[w=6
+		,h=4
+		,dy=1
+		,sn=1
+		,hp=200
+		,pw=48
+		,ph=32
+		,sp=128
+		,exp=0
+		,exp2=0
+		,pw=20
+		,cnt=0
+		,phase=1
+		,maxshots=0
+		,tar_swing_x=64
+		,sc=0
+		]])
 	hist={}
+	
 	
 
 	function upd(_ENV)
@@ -1088,33 +1111,46 @@ function boss()
 		-- 	sn=sn%3+11-2
 		-- 	s=sprs[sn]
 		-- end
-		dx=cos(fra/128)/2
-		if y<24 then
-			dy=1
-		else swinging=true end
+		-- dx=cos(fra/128)/2
+		-- if y<24 then
+		-- 	dy=1
+		-- else swinging=true end
 
-		if(swinging and not spline) then 
+		if not spline then 
 			tar_swing_x=0
 			while tar_swing_x==0 or x+tar_swing_x<24 or x+tar_swing_x>96 do 
 				tar_swing_x=(rnd(17)\1-8)*8
 			end
-			tar_swing_y=(rnd(5)\1-2)*16
+
+		
+			--[[
+			saves 8 tokens
+			this code was here twice !
+
 			if y<32 then tar_swing_y =16 end
+			]]--
+			
+			--[[
+			saves 6 tokens
+			chaned all the if statements into a single line
 
-			-- tar_swing_x += x
-			-- tar_swing_y += y
-			-- tar_swing_x = x-8
-			-- tar_swing_y=y				printh(sc .. " x:" ..spline(sc).x.." y:" ..spline(sc).y)max
-
+			tar_swing_y=(rnd(5)\1-2)*16
 			if y<32 then tar_swing_y =16 end
 			if y>64 then tar_swing_y =-48 end
 			if phase==3 then tar_swing_y=32-y end
+			]]
+			tar_swing_y = phase==3 and 32-y or y>64 and -48 or y<32 and 16 or (rnd(5)\1-2)*16
+			
+
+			
 
 			-- tar_swing_x=0
 			-- tar_swing_y=0
+			local midx,midy = x+0.5*tar_swing_x,
+			min(y, y+tar_swing_y)-8
 			local spl_dat={x,y,
-			x+0.5*tar_swing_x,min(y, y+tar_swing_y)-8,
-			x+0.5*tar_swing_x,min(y, y+tar_swing_y)-8,
+			midx,midy,
+			midx,midy,
 			x+tar_swing_x,y+tar_swing_y}
 			spline=read_spline(spl_dat)
 		else if spline then 
@@ -1134,7 +1170,7 @@ function boss()
 
 		if fra%120 == 0 and phase==2 then
 			for i = 1,5 do
-			add_enemy(mine(rnd(128),rnd(128)))
+				add_enemy(mine(rnd(128),rnd(128)))
 			end
 		end
 
@@ -1153,13 +1189,21 @@ function boss()
 	--od=draw300
 	function draw(_ENV)
 		
-		
+		--[[
+		saves 4 tokens
+		converted into single line
+
 		if flash>0 then
 			pal(lightenpal[1])
 		end
 		if flash>2 then
 			pal(lightenpal[2])
 		end
+		]]
+		if flash>0 then 
+			pal(lightenpal[flash>2 and 2 or 1])
+		end
+
 		sspr(0,64,12,32,x-12-exp,y-15)
 		sspr(35,64,12,32,x+exp,y-15)
 		sspr(13,64,22,32,x-11,y-15)
@@ -1174,6 +1218,8 @@ end
 function boss_attach(boss,side)
 	-- -1 left 1 right
 	local _ENV = create_mob(128,0,0,1.5,4)
+
+	--[[
 	ox,exp,ht=-3,0,{0,0}
 	ang=0.75
 	prefiring=false
@@ -1181,13 +1227,17 @@ function boss_attach(boss,side)
 	rot_spd =0
 	countdown=120
 	max_countdown=120
+	
+	hp=50
+	od=draw
+	]]
+	ox,exp,ht,ang,prefiring,firing,rot_spd,countdown,max_countdown,hp,od=-3,0,{0,0},0.75,false,false,0,120,120,50,draw
+	
 	if side==1 then
 		s=132.375
 		ox=27
 	end
 
-	hp=50
-	od=draw
 	function draw()
 		lazershot(_ENV)
 		for i=0,1,0.3333 do
@@ -1215,15 +1265,27 @@ function boss_attach(boss,side)
 		else firing =false
 		end
 		
-		local h=boss.hist[(boss.fra-10)%20]
-		ht=h
+
+		--[[
+			saves 9 tokens
+
+			this doesnt seem to do anything
 		local tx,ty=h[1],h[2]
+		]]
 
+	--[[
+		saves 4 tokens
+		making use of merge/make
+
+		ht=h
 		exp=min(exp+0.5,18)
-
 		flash=max(0, flash-1)
 		x=h[1]+side*(pw*-0.5+boss.pw*0.5+exp)
 		y=h[2]
+		]]
+		local h=boss.hist[(boss.fra-10)%20]
+		merge(_ENV,make("ht,exp,flash,x,y",h,min(exp+0.5,18),max(0, flash-1),h[1]+side*(pw*-0.5+boss.pw*0.5+exp),h[2]))
+	
 	end
 
 	add_enemy(_ENV,1)
@@ -1234,42 +1296,110 @@ function line_shot(e,rage)
 	sfx(58,3)
 	local _ENV=create_mob(86,e.x,e.y+12)
 	pw,ph,f=10,2,5
+
 	function upd(_ENV)
 		f+=1
 		pw +=rage
+
 		if (f>0) then
 				_ENV.dy=min(f/15,1.5)
 		else 
 			x=e.x
 		end
+
 		if y>130 then
 			remove(_ENV)
 		end
 	end
+
 	function draw(_ENV)
+		--[[
+		saves 7 tokens
+		reduced identical calls
+
 		line(x-0.375*pw,y,x+0.375*pw,y,11)
 		-- line(x-16,y,x+16,y, 11)
 		line(x-0.5*pw,y-1,x-0.375*pw,y-1,11)
 		line(x+0.375*pw,y-1,x+0.5*pw,y-1,11)
+		]]
+
+		--[[
+		saves 3 more tokens
+		assign 0.5*pw to its own variable
+
+		local x1,x2,y2 = x-0.375*pw,x+0.375*pw,y-1
+		line(x1,y,x2,y,11)
+		line(x-0.5*pw,y2,x1,y2,11)
+		line(x2,y2,x+0.5*pw,y2,11)
+
 		for oy=1,8 do 
 			for i=-0.5*pw,0.5*pw do
+		]]
+
+		local x1,x2,y2,half_pw = x-0.375*pw,x+0.375*pw,y-1,pw*0.5
+		line(x1,y,x2,y,11)
+		line(x-half_pw,y2,x1,y2,11)
+		line(x2,y2,x+half_pw,y2,11)
+
+		for oy=1,8 do 
+			for i=-half_pw,half_pw do
+
 				ly=y-oy 
 				if abs(i)>5 then
 					ly -= 1
 				end
+
+				
+				--[[
+				saves 4 tokens
+				condensed this whole thing
+
 				local cindex = rnd(5)\1+2-oy
 				local c=3
-				if cindex >= 4 then c=11 end
+
+				if cindex >= 4 then 
+					c=11 
+				end
+
 				if cindex >2 then 
 					pset(x+i,ly,c)
 				end
+				]]
+				local cindex = rnd(5)\1+2-oy
+				if cindex >2 then 
+					pset(x+i,ly,cindex>=4 and 11 or 3)
+				end
+
+
 			end
-		end	draw_collision(_ENV)
+		end	
+		
+		draw_collision(_ENV)
 
 	end
+
+	--[[
+	saves 1 token
+	this is fucked up
+
 	add(ebuls, _ENV)
 	add(mobs, _ENV)
+	]]
+	add(mobs, add(ebuls, _ENV))
 end
+
+-->8
+-- might be redunant
+-- makes a table from keys and vardics
+function make(_keys, ...)
+	local obj,vars = {},{...}
+	for k,v in ipairs(split(_keys)) do 
+					obj[v]=vars[k]
+	end
+
+	return obj
+end
+
 
 __gfx__
 00008e700e0e0000020200000000006c76600000dc777ccddc777ccd1dc7cdd10111111008008000000000008080000800800000800080000080080000808000

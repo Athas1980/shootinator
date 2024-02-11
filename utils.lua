@@ -40,6 +40,10 @@ function read_assoc(str)
 		for kv in all(kvs) do
 			local k,v=unpack(
 				split(kv,"="))
+				v=v=="{}" and {} or v
+				if v=="false" then 
+					v=false
+				end 
 			tab[k]=v
 		end
 	return tab

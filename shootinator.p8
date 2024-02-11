@@ -188,25 +188,29 @@ function init_game()
 	state=states.intro
 	init_level_intro(1)
 	srand(33)
-	mobs,buls,ebuls,enmys,pparts,
-	p_ups={},{},{},{},{},{}
+	--must go on one line
+	merge(_ENV, read_assoc[[level=1
+	,mobs={},buls={},ebuls={},enmys={},pparts={},p_ups={},str_shield=false,str_rapid=false,str_spread=false,invun=0
+	,flash=0
+	,score=0
+	,spread=0
+	,rapid=0
+	,d=0
+	,lives=5
+	,f=-1
+	,score_mult=1
+	,shots=0
+	,hits=0
+	,kills=0]])
 	tabs={mobs,buls,
 		enmys,ebuls,p_ups}
 	p=create_player()
 	p:upd()
 	shield=create_shield()
-	str_shield,str_rapid,str_spread
-	=false    ,false    ,false
-	invun,flash,score,spread,rapid,
-	d,lives,f ,score_mult,shots,
-	hits, kills=
-	0    ,0    ,0    ,0     ,0,
-	0,5    ,-1,1         ,0,
-	0   ,0
 	add(mobs,p)
 	add(mobs,shield)
 	stars = create_stars()
-	score_mult=1
+	-- score_mult=1
 
 	score_cols=split("12,12,6,6,13")
 
@@ -225,15 +229,13 @@ function draw_level_intro()
 end
 
 function update_level_intro()
-	if btnp(❎) then
-		if intro==1 then
-			if dialog<7 then 
-				dialog +=1
-			else
-				state=states.game
-			end
-		end 
-	end
+	if btnp(❎) and intro == 1 then
+		if dialog<7 then 
+			dialog +=1
+		else
+			state=states.game
+		end
+	end 
 end
 
 #include player.lua
@@ -482,9 +484,9 @@ function draw_game()
 
 	draw_stars()
 	draw_pparts()
-	stripe("d",125,30,split("7,7,6,13,5"))
-	stripe("s",125,36,split("7,7,6,13,5"))
-	stripe("t",125,42,split("7,7,6,13,5"))
+	stripe("d\ns\n\t",125,30,
+	split("7,7,6,13,5,7,7,7,6,13,5,7,7,7,6,13,5,7"))
+
 	clip()
 	--spr(85,125,20,1,2)
 	rect(unpack(split("125,50,127,127,1")))
@@ -495,7 +497,7 @@ function draw_game()
 	for i=1,5 do
 		--local s=9
 		if i<lives+1 then
-			spr(9,(i*8)-8,0)
+			spr(9,i*7,0)
 		end
 		
 	end
