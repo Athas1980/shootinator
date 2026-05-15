@@ -124,7 +124,7 @@ function _init()
 
 	--global tables
 	init_title()
-	#include levels.lua
+	#include spawn_tab_compact.lua
 	music(0,0,3)
 	dialogs={ 
 		{[[
@@ -189,7 +189,7 @@ function init_game()
 	init_level_intro(1)
 	srand(33)
 	--must go on one line
-	merge(_ENV, read_assoc[[level=1
+	merge(_ENV, read_assoc[[level=2
 	,mobs={},buls={},ebuls={},enmys={},pparts={},p_ups={},str_shield=false,str_rapid=false,str_spread=false,invun=0
 	,flash=0
 	,score=0
@@ -213,6 +213,7 @@ function init_game()
 	-- score_mult=1
 
 	score_cols=split("12,12,6,6,13")
+	#include levels.lua
 
 end
 
