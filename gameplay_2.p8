@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 41
 __lua__
---shootinator
+--shootinator l3
 --wes & bob
 
 --todo
@@ -124,7 +124,7 @@ function _init()
 
 	--global tables
 	init_title()
-	#include spawn_tab_compact.lua
+	#include spawn_l3.lua
 	music(0,0,3)
 	dialogs={ 
 		{[[
@@ -189,7 +189,7 @@ function init_game()
 	init_level_intro(1)
 	srand(33)
 	--must go on one line
-	merge(_ENV, read_assoc[[level=2
+	merge(_ENV, read_assoc[[level=1
 	,mobs={},buls={},ebuls={},enmys={},pparts={},p_ups={},str_shield=false,str_rapid=false,str_spread=false,invun=0
 	,flash=0
 	,score=0
@@ -214,7 +214,9 @@ function init_game()
 
 	score_cols=split("12,12,6,6,13")
 	#include levels.lua
-
+	score=dget(1) lives=dget(2)
+	spread=dget(3) rapid=dget(4)
+	str_shield=dget(5)==1
 end
 
 function init_level_intro(n)
@@ -385,14 +387,7 @@ function update_game()
 	if d>=total_dist and #enmys==0 then
 		spd=0.25
 		if #pparts==0 then
-			if level==2 then
-				dset(1,score) dset(2,lives)
-				dset(3,spread) dset(4,rapid)
-				dset(5,str_shield and 1 or 0)
-				load("gameplay_2.p8")
-			else
-				init_win()
-			end
+			init_win()
 		end
 	end
 		
@@ -971,6 +966,7 @@ end
 --ui/dialog
 
 #include textbox.lua
+#include boss.lua
 
 function init_win()
 	music(-1,1000)
