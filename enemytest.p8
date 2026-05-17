@@ -85,7 +85,7 @@ function _init()
 	
 	splines=read_splines(spl_dat)
 	--load sprite sheet music etc
-	-- reload(0,0,0x42ff,"shootinator.p8")
+	-- reload(0,0,0x42ff,"gameplay_1.p8")
 	-- cstore(0,0,0x42ff)
 
 

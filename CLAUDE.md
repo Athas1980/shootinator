@@ -5,7 +5,11 @@ A Pico-8 shoot-em-up. Multi-cart structure (see below).
 
 ## File map
 
-### Gameplay cart 1 — `shootinator.p8` (levels 1 + 2)
+### Launch cart — `shootinator.p8`
+Entry point. Title screen + story dialogs. Loads `gameplay_1.p8` to start the game.
+On game over (from any cart): load back here.
+
+### Gameplay cart 1 — `gameplay_1.p8` (levels 1 + 2)
 Lua includes:
 - `mob.lua` — base mob creation and default behaviours
 - `player.lua` — player, shield, powerup creation
@@ -16,30 +20,34 @@ Lua includes:
 - `textbox.lua` — dialog/textbox rendering
 - `level_intros.lua` — level intro logic (currently stub)
 
-### Gameplay cart 2 — `gameplay_2.p8` (level 3 + boss)
-Same engine includes as above, plus:
+### Gameplay cart 2 — `gameplay_2.p8` (level 3 flight)
+Same engine includes as gameplay_1. L3 enemies + end-of-level results.
+Loads `boss.p8` at end of level.
+- `spawn_l3.lua` — level 3 spawn data (stub, expand with enemies)
+
+### Boss cart — `boss.p8` (not yet built)
+Boss taunts/dialog + boss fight + win screen.
 - `boss.lua` — boss-only enemies: `add_enemy`, `mine`, `boss`, `boss_attach`, `line_shot`
-- `spawn_l3.lua` — level 3 spawn data (boss at distance 400, expand as needed)
+On game over or win: loads `shootinator.p8`.
 
 ### Dev/test carts (do not merge into game carts)
-- `enemytest.p8` — enemy test cart (contains reference boss code at commit `dbc0c08`)
-- `enemytest2.p8` — older enemy test (December 2023, do not use for boss reference)
-- Various others (`collision-test.p8`, `spline.p8`, etc.)
+- `enemytest.p8` — active dev cart for testing enemy scenes. Reference boss code at commit `dbc0c08`.
+- Various others (`collision-test.p8`, `spline.p8`, etc.) — provenance unclear, candidates for cleanup
 
-## Token counts (as of multi-cart split)
+## Token counts (as of multi-cart split, gameplay_1 rename)
 Use `info` in Pico-8 on the non-combined cart for accurate counts.
 `combine.py` now handles indented `#include` — editor count on combined file should match.
 
-- **shootinator.p8**: 6936 / 8192 tokens (~1256 free)
-- **gameplay_2.p8**: 8171 / 8192 tokens (~21 free), compressed 14784 / 15616
-
-gameplay_1 has room for a new L2 enemy. gameplay_2 is tight — bug fixes only, no new features without stripping something.
+- **shootinator.p8**: stub only, trivial
+- **gameplay_1.p8**: 6936 / 8192 tokens (~1256 free) — room for new L2 enemy
+- **gameplay_2.p8**: 8171 / 8192 tokens (~21 free) — will gain room once boss.lua + title screen code removed
+- **boss.p8**: not yet built
 
 ## Goals
 
 1. **3 levels** — practical, level data is cheap in compact string format
-2. **Boss at the end of level 3** — boss code is in `gameplay_2.p8` via `boss.lua`
-3. **Multi-cart** — implemented. `shootinator.p8` → `gameplay_2.p8` via `load()` at end of level 2.
+2. **Boss at the end of level 3** — boss code moves to `boss.p8`
+3. **Multi-cart** — implemented. Flow: `shootinator.p8` → `gameplay_1.p8` → `gameplay_2.p8` → `boss.p8` → `shootinator.p8`
 4. **Lines within 32 chars** — general style goal; **exception: boss code is exempt**
 5. **Readable code** — general goal; **exception: boss code uses the `_ENV` trick** — intentional.
 
@@ -47,13 +55,14 @@ gameplay_1 has room for a new L2 enemy. gameplay_2 is tight — bug fixes only, 
 
 - **Level 1**: Done. Green, disc, flap enemies. Data in `spawn_tab_compact.lua` (first section).
 - **Level 2**: Skeleton only. Lazer turret focus mechanic. Support enemy unspecified/unimplemented. Data in `spawn_tab_compact.lua` (second section, after `|`). **Currently hardcoded as `level=2` in `init_game()` for testing.**
-- **Level 3**: Stub — boss spawn only in `spawn_l3.lua`. No intro enemies yet.
+- **Level 3**: Stub — boss spawn only in `spawn_l3.lua`. No intro enemies yet. Boss moves to `boss.p8`.
 
-## Cart structure (implemented)
+## Cart structure
 
-- **`shootinator.p8`** (gameplay_1): Levels 1+2. On level 2 complete: saves score/lives/powerups to cartdata slots 1-5, calls `load("gameplay_2.p8")`.
-- **`gameplay_2.p8`** (gameplay_2): Level 3 + boss. On init: restores state from cartdata. Win → `init_win()`.
-- **`intro.p8`** (not yet built): Planned. Title + level intro dialogs. Would free tokens in gameplay carts by removing title screen code.
+- **`shootinator.p8`** (launch): Title + story. Loads `gameplay_1.p8`. Game over from any cart returns here.
+- **`gameplay_1.p8`** (gameplay_1): Levels 1+2. On level 2 complete: saves score/lives/powerups to cartdata slots 1-5, calls `load("gameplay_2.p8")`.
+- **`gameplay_2.p8`** (gameplay_2): Level 3 flight + enemies. On complete: saves state, calls `load("boss.p8")`.
+- **`boss.p8`** (not yet built): Boss fight. On win/game over: `load("shootinator.p8")`.
 
 ### Cartdata slots
 - 0: hi-score (existing)
@@ -64,12 +73,12 @@ gameplay_1 has room for a new L2 enemy. gameplay_2 is tight — bug fixes only, 
 - 5: str_shield (1 or 0)
 
 ## Within-cart level progression (not yet implemented)
-Level 1 → level 2 transition within `shootinator.p8` is not coded. Currently `level=2` is hardcoded in `init_game()` for development. A lightweight `init_level()` is needed that resets `d`, rebuilds `spawn_tab`, clears enemies, keeps player state.
+Level 1 → level 2 transition within `gameplay_1.p8` is not coded. Currently `level=2` is hardcoded in `init_game()` for development. A lightweight `init_level()` is needed that resets `d`, rebuilds `spawn_tab`, clears enemies, keeps player state.
 
 ## Known boss bugs
 - **Arms don't die with the boss** — **FIXED** in `boss.lua`: `boss_attach.upd` checks `boss.hp<=0` and removes itself.
 - **Mines were working but in an early state** — needs playtesting to assess.
-- Other bugs TBD — rediscover by playing `gameplay_2.p8`.
+- Other bugs TBD — rediscover by playing `boss.p8` once built.
 
 ## Spawn data format
 ```
