@@ -93,12 +93,22 @@ Levels separated by `|`. The loader in `levels.lua` uses `level` variable to pic
 
 ## Credits (for shootinator.p8 credits screen)
 
+### Direct credits
 - **lokistriker** — main gameplay music. Sent via Discord. Currently only noted as "bob" in cart headers.
 - **pancelor** — spline suggestion. Discord: https://discord.com/channels/215267007245975552/215268097441923075/995111340664430602
-- **atticurse** — contribution unclear, no description in comment. Discord: https://discord.com/channels/398648936879095828/810921766314442772/992853422145552415. Possibly one of two portrait art donations — check the message to confirm.
+- **paraK00PA** — both portrait sprites: player character and alien. Provided as .p8 files via Discord, July 2022. Requested credit as `paraK00PA`.
+- **atticurse** — contribution unclear (not art, not code). Moved to special thanks.
 - **easeoutbounce author** — function taken from https://www.lexaloffle.com/bbs/?tid=40577. Check thread for name.
-- **Unknown second portrait artist** — two portrait donations mentioned, only atticurse identified so far.
-- **Krystman / Lazy Devs Academy** — acknowledgements section, not direct credit. Shmup tutorial series provided structural goals; no code used directly.
+
+### Special thanks
+- **atticurse** — provided something during development; exact contribution unclear.
+- **LouieChapm** — ongoing support.
+- **Aktane** — early community support; helped with the bullet engine alongside otto.
+- **LokiStriker** — again, for community support beyond the music.
+- **...and all the other members of the Lazy Devs Discord** — catch-all for the wider community (otto, Eric, etc.).
+
+### Acknowledgements
+- **Krystman / Lazy Devs Academy** — shmup tutorial series provided structural goals; no code used directly.
 
 ## Accurate token counting
 - Run `info` in Pico-8 on the **non-combined** `.p8` file — this is authoritative.
