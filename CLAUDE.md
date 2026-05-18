@@ -54,7 +54,7 @@ Use `info` in Pico-8 on the non-combined cart for accurate counts.
 ## Level design status
 
 - **Level 1**: Done. Green, disc, flap enemies. Data in `spawn_tab_compact.lua` (first section).
-- **Level 2**: Skeleton only. Lazer turret focus mechanic. Support enemy unspecified/unimplemented. Data in `spawn_tab_compact.lua` (second section, after `|`). **Currently hardcoded as `level=2` in `init_game()` for testing.**
+- **Level 2**: Direction decided. Core composition: scrolling geometry (via map — undo map hack first), mines as environmental hazard (drop clusters in corridors), lazer turrets as anchors with dynamic enemies around them. Support enemies: greens, discs, spline-shooter. Flaps not a good fit alongside turrets/blobs. Data in `spawn_tab_compact.lua` (second section, after `|`). **Currently hardcoded as `level=2` in `init_game()` for testing.**
 - **Level 3**: Stub — boss spawn only in `spawn_l3.lua`. No intro enemies yet. Boss moves to `boss.p8`.
 
 ## Cart structure
