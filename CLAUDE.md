@@ -110,6 +110,18 @@ Levels separated by `|`. The loader in `levels.lua` uses `level` variable to pic
 ### Acknowledgements
 - **Krystman / Lazy Devs Academy** — shmup tutorial series provided structural goals; no code used directly.
 
+## Dev notes
+
+### L2 map scrolling (geotest.p8)
+- Map draw call must come **after** `draw_stars()`, not before. Stars draw into black pixels of map tiles otherwise.
+- `palt(0,false)` required before `map()` call — without it, tile colour 0 is transparent and stars bleed through solid geometry.
+- Trade-off: stars don't appear behind edge tiles of the map. Acceptable — solid walls occluding stars is more correct than the alternative.
+- Scroll speed: 0.25ppf used in geotest due to limited map rows available. 0.5ppf preferred for gameplay feel.
+- **Map space strategy (settled):** Use upper map only for geometry within the cart. Extend level length by storing additional map sections in dedicated carts and loading them into himem via `reload()`. At scroll transition points, `memcpy` the next section over the live map — one-time cost per transition, no per-frame overhead. Overlap one screen's worth of tiles at each seam to hide the switchover. Up to 3 "banks" possible this way.
+- **Rejected approaches:**
+  - Per-frame spritesheet swap (two `memcpy`s per frame — too costly and unclean).
+  - Sprite renumbering — sprite numbers are sometimes calculated by expression, making static search-and-replace unreliable.
+
 ## Accurate token counting
 - Run `info` in Pico-8 on the **non-combined** `.p8` file — this is authoritative.
 - `combine.py` now handles indented `#include` (fixed). Combined file editor count should match `info`.
