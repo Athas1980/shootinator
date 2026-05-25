@@ -55,6 +55,13 @@ Use `info` in Pico-8 on the non-combined cart for accurate counts.
 
 - **Level 1**: Done. Green, disc, flap enemies. Data in `spawn_tab_compact.lua` (first section).
 - **Level 2**: Direction decided. Core composition: scrolling geometry (via map — undo map hack first), mines as environmental hazard (drop clusters in corridors), lazer turrets as anchors with dynamic enemies around them. Support enemies: greens, discs, spline-shooter. Flaps not a good fit alongside turrets/blobs. Data in `spawn_tab_compact.lua` (second section, after `|`). **Currently hardcoded as `level=2` in `init_game()` for testing.**
+
+### L2 design notes (may change)
+- **Open/geometry alternation** — free-roaming enemies (blobs, flaps, discs) only appear in open intervals between geometry sections. Geometry acts as punctuation, not constant.
+- **Enemy despawn on scroll** — enemies from open sections must despawn (offscreen cull or lifetime limit) before geometry closes in. Wall-phasing would feel cheap and break implicit contract with player.
+- **Mines** — spawn mid-scroll into tight sections for unpredictability. Stationary placement in map is less interesting than dynamic drops.
+- **Lazer turrets in map** — lazer length needs a hard cap (or wall collision stop) before turrets work in corridor spaces. Encounter design must leave player a sight line to return fire even if risky.
+- **Ground-hugging wall enemy** — potential new enemy: moves left/right along horizontal map edges, shoots upward. Sprite already drawn. Would need map collision to detect and turn at walls. High tuning cost but distinct from anything in current roster.
 - **Level 3**: Stub — boss spawn only in `spawn_l3.lua`. No intro enemies yet. Boss moves to `boss.p8`.
 
 ## Cart structure
